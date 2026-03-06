@@ -19,9 +19,13 @@ export interface Note {
 export interface Group {
   id: string;
   name: string;
+  description?: string;
   noteCount: number;
   lastModified: string;
   parentId?: string;
+  isLocked?: boolean;
+  isShared?: boolean;
+  collaborators?: { id: string; name: string; avatar: string; role: 'Owner' | 'Editor' | 'Viewer' }[];
 }
 
 export interface Activity {
@@ -44,6 +48,9 @@ interface AppState {
   addNote: (note: Note) => void;
   updateNote: (id: string, updates: Partial<Note>) => void;
   deleteNote: (id: string) => void;
+  addGroup: (group: Group) => void;
+  updateGroup: (id: string, updates: Partial<Group>) => void;
+  deleteGroup: (id: string) => void;
   toggleFavorite: (id: string) => void;
   setSelectedNote: (id: string | null) => void;
   setSidebarOpen: (open: boolean) => void;
@@ -61,7 +68,7 @@ const initialNotes: Note[] = [
     isFavorite: true,
     isLocked: false,
     hasAI: true,
-    groupId: 'g1'
+    groupId: 'g1-1'
   },
   {
     id: '2',
@@ -87,14 +94,16 @@ const initialNotes: Note[] = [
     isFavorite: true,
     isLocked: false,
     hasAI: true,
-    groupId: 'g1'
+    groupId: 'g1-1'
   }
 ];
 
 const initialGroups: Group[] = [
-  { id: 'g1', name: 'Work Projects', noteCount: 12, lastModified: '1 hour ago' },
-  { id: 'g2', name: 'Personal Life', noteCount: 8, lastModified: '2 days ago' },
-  { id: 'g3', name: 'Random Ideas', noteCount: 24, lastModified: '5 mins ago' }
+  { id: 'g1', name: 'Work Projects', description: 'Core business strategies and research.', noteCount: 12, lastModified: '1 hour ago', isShared: true, collaborators: [{ id: 'u1', name: 'Alex Rivers', avatar: 'https://picsum.photos/seed/u1/100/100', role: 'Owner' }] },
+  { id: 'g1-1', name: 'Project Phoenix', description: 'Next-gen platform development.', parentId: 'g1', noteCount: 4, lastModified: '30 mins ago' },
+  { id: 'g1-2', name: 'Market Research', description: 'Competitor analysis and trends.', parentId: 'g1', noteCount: 8, lastModified: '2 hours ago' },
+  { id: 'g2', name: 'Personal Life', description: 'Journal, habits, and fitness.', noteCount: 8, lastModified: '2 days ago', isLocked: true },
+  { id: 'g3', name: 'Random Ideas', description: 'Brainstorming sandbox.', noteCount: 24, lastModified: '5 mins ago' }
 ];
 
 const initialActivities: Activity[] = [
@@ -116,6 +125,13 @@ export const useStore = create<AppState>((set) => ({
   })),
   deleteNote: (id) => set((state) => ({
     notes: state.notes.filter((n) => n.id !== id)
+  })),
+  addGroup: (group) => set((state) => ({ groups: [...state.groups, group] })),
+  updateGroup: (id, updates) => set((state) => ({
+    groups: state.groups.map((g) => g.id === id ? { ...g, ...updates } : g)
+  })),
+  deleteGroup: (id) => set((state) => ({
+    groups: state.groups.filter((g) => g.id !== id)
   })),
   toggleFavorite: (id) => set((state) => ({
     notes: state.notes.map((n) => n.id === id ? { ...n, isFavorite: !n.isFavorite } : n)
