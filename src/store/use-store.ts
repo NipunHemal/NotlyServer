@@ -30,7 +30,7 @@ export interface Group {
 
 export interface Activity {
   id: string;
-  type: 'edit' | 'share' | 'version' | 'restore' | 'access';
+  type: 'edit' | 'share' | 'version' | 'restore' | 'access' | 'create';
   description: string;
   timestamp: string;
   user: string;
@@ -44,16 +44,23 @@ interface AppState {
   selectedNoteId: string | null;
   sidebarOpen: boolean;
   
+  // UI States
+  isCreateNoteModalOpen: boolean;
+  isCreateGroupModalOpen: boolean;
+  
   // Actions
-  addNote: (note: Note) => void;
+  addNote: (note: Omit<Note, 'id' | 'lastEdited' | 'author' | 'isFavorite' | 'isLocked' | 'hasAI'>) => void;
   updateNote: (id: string, updates: Partial<Note>) => void;
   deleteNote: (id: string) => void;
-  addGroup: (group: Group) => void;
+  addGroup: (group: Omit<Group, 'id' | 'noteCount' | 'lastModified'>) => void;
   updateGroup: (id: string, updates: Partial<Group>) => void;
   deleteGroup: (id: string) => void;
   toggleFavorite: (id: string) => void;
   setSelectedNote: (id: string | null) => void;
   setSidebarOpen: (open: boolean) => void;
+  setCreateNoteModalOpen: (open: boolean) => void;
+  setCreateGroupModalOpen: (open: boolean) => void;
+  addActivity: (activity: Omit<Activity, 'id' | 'timestamp' | 'user'>) => void;
 }
 
 const initialNotes: Note[] = [
@@ -107,7 +114,7 @@ const initialGroups: Group[] = [
 ];
 
 const initialActivities: Activity[] = [
-  { id: 'a1', type: 'edit', description: 'Updated Cognitio AI System Specs', timestamp: '5 mins ago', user: 'Alex Rivers', docRef: '3' },
+  { id: 'a1', type: 'edit', description: 'Updated Cognito AI System Specs', timestamp: '5 mins ago', user: 'Alex Rivers', docRef: '3' },
   { id: 'a2', type: 'version', description: 'Created a new version of Project Phoenix Roadmap', timestamp: '2 hours ago', user: 'Alex Rivers', docRef: '1' },
   { id: 'a3', type: 'share', description: 'Shared Morning Meditation Rituals with Sarah', timestamp: 'Yesterday', user: 'Alex Rivers', docRef: '2' }
 ];
@@ -118,24 +125,92 @@ export const useStore = create<AppState>((set) => ({
   activities: initialActivities,
   selectedNoteId: null,
   sidebarOpen: true,
+  isCreateNoteModalOpen: false,
+  isCreateGroupModalOpen: false,
 
-  addNote: (note) => set((state) => ({ notes: [note, ...state.notes] })),
+  addActivity: (activity) => set((state) => ({
+    activities: [
+      {
+        ...activity,
+        id: Math.random().toString(36).substr(2, 9),
+        timestamp: 'Just now',
+        user: 'Alex Rivers'
+      },
+      ...state.activities
+    ]
+  })),
+
+  addNote: (note) => set((state) => {
+    const newNote: Note = {
+      ...note,
+      id: Math.random().toString(36).substr(2, 9),
+      lastEdited: 'Just now',
+      author: 'Alex Rivers',
+      isFavorite: false,
+      isLocked: false,
+      hasAI: false,
+    };
+    
+    // Add activity
+    const activity: Activity = {
+      id: Math.random().toString(36).substr(2, 9),
+      type: 'create',
+      description: `Created new note: ${note.title}`,
+      timestamp: 'Just now',
+      user: 'Alex Rivers',
+      docRef: newNote.id
+    };
+
+    return { 
+      notes: [newNote, ...state.notes],
+      activities: [activity, ...state.activities]
+    };
+  }),
+
   updateNote: (id, updates) => set((state) => ({
     notes: state.notes.map((n) => n.id === id ? { ...n, ...updates } : n)
   })),
+
   deleteNote: (id) => set((state) => ({
     notes: state.notes.filter((n) => n.id !== id)
   })),
-  addGroup: (group) => set((state) => ({ groups: [...state.groups, group] })),
+
+  addGroup: (group) => set((state) => {
+    const newGroup: Group = {
+      ...group,
+      id: Math.random().toString(36).substr(2, 9),
+      noteCount: 0,
+      lastModified: 'Just now',
+    };
+
+    const activity: Activity = {
+      id: Math.random().toString(36).substr(2, 9),
+      type: 'create',
+      description: `Created new group: ${group.name}`,
+      timestamp: 'Just now',
+      user: 'Alex Rivers'
+    };
+
+    return { 
+      groups: [...state.groups, newGroup],
+      activities: [activity, ...state.activities]
+    };
+  }),
+
   updateGroup: (id, updates) => set((state) => ({
     groups: state.groups.map((g) => g.id === id ? { ...g, ...updates } : g)
   })),
+
   deleteGroup: (id) => set((state) => ({
     groups: state.groups.filter((g) => g.id !== id)
   })),
+
   toggleFavorite: (id) => set((state) => ({
     notes: state.notes.map((n) => n.id === id ? { ...n, isFavorite: !n.isFavorite } : n)
   })),
+
   setSelectedNote: (id) => set({ selectedNoteId: id }),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
+  setCreateNoteModalOpen: (open) => set({ isCreateNoteModalOpen: open }),
+  setCreateGroupModalOpen: (open) => set({ isCreateGroupModalOpen: open }),
 }));

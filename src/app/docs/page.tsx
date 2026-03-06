@@ -1,14 +1,14 @@
-
 "use client";
 
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
 import { useStore } from '@/store/use-store';
 import { DocCard } from '@/components/documents/doc-card';
-import { Filter, Grid, List as ListIcon, SortDesc, Search } from 'lucide-react';
+import { Filter, Grid, List as ListIcon, SortDesc, Search, FileText, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
 
 export default function DocsPage() {
   const { notes } = useStore();
@@ -107,5 +107,3 @@ export default function DocsPage() {
     </AppLayout>
   );
 }
-
-import { FileText, MoreVertical } from 'lucide-react';
