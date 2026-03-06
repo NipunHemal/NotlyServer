@@ -1,3 +1,28 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "user-avatar",
+      "description": "User profile avatar",
+      "imageUrl": "https://picsum.photos/seed/user-42/100/100",
+      "imageHint": "user portrait"
+    },
+    {
+      "id": "doc-thumb-1",
+      "description": "Document preview thumbnail 1",
+      "imageUrl": "https://picsum.photos/seed/doc1/400/300",
+      "imageHint": "abstract digital"
+    },
+    {
+      "id": "doc-thumb-2",
+      "description": "Document preview thumbnail 2",
+      "imageUrl": "https://picsum.photos/seed/doc2/400/300",
+      "imageHint": "minimal workspace"
+    },
+    {
+      "id": "group-thumb-1",
+      "description": "Group thumbnail",
+      "imageUrl": "https://picsum.photos/seed/group1/200/200",
+      "imageHint": "geometric patterns"
+    }
+  ]
 }
