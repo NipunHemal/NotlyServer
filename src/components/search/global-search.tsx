@@ -9,7 +9,8 @@ import {
 import { useStore, Note, Group } from '@/store/use-store';
 import { 
   Search, FileText, Folder, Tag, User, History, 
-  Sparkles, File as FileIcon, ImageIcon, Settings 
+  Sparkles, File as FileIcon, ImageIcon, Settings, 
+  Plus
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';

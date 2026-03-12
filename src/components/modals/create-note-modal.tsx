@@ -10,14 +10,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useStore } from '@/store/use-store';
 import { useToast } from '@/hooks/use-toast';
-import { FileText, Tag as TagIcon, Layout } from 'lucide-react';
+import { FileText, Tag as TagIcon, Layout, Sparkles } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export function CreateNoteModal() {
   const { isCreateNoteModalOpen, setCreateNoteModalOpen, addNote, groups } = useStore();
   const { toast } = useToast();
+  const router = useRouter();
   
   const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
   const [category, setCategory] = useState('Work');
   const [groupId, setGroupId] = useState<string>('');
   const [tags, setTags] = useState('');
@@ -28,59 +29,60 @@ export function CreateNoteModal() {
       return;
     }
 
-    addNote({
+    const id = addNote({
       title,
-      content,
+      content: '<h1>' + title + '</h1><p>Start writing here...</p>',
       category,
-      groupId: groupId || undefined,
+      groupId: groupId === 'none' ? undefined : groupId,
       tags: tags.split(',').map(t => t.trim()).filter(t => t !== ''),
     });
 
-    toast({ title: "Note Created", description: `${title} has been added to your docs.` });
+    toast({ title: "Document Created", description: "Taking you to the editor..." });
     
-    // Reset and close
+    // Reset and navigate
     setTitle('');
-    setContent('');
     setCategory('Work');
     setGroupId('');
     setTags('');
     setCreateNoteModalOpen(false);
+    
+    router.push('/docs'); // Ensure they are on the docs page where DocumentEditor renders
   };
 
   return (
     <Dialog open={isCreateNoteModalOpen} onOpenChange={setCreateNoteModalOpen}>
-      <DialogContent className="sm:max-w-[500px] glass-panel border-white/10 text-white">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-primary/10 text-primary">
-              <FileText className="w-5 h-5" />
-            </div>
-            Create New Document
-          </DialogTitle>
-          <DialogDescription className="text-muted-foreground">
-            Start a new thought or organize an existing project.
-          </DialogDescription>
+      <DialogContent className="sm:max-w-[550px] glass-panel border-white/10 text-white rounded-[2.5rem] p-10">
+        <DialogHeader className="space-y-4">
+          <div className="w-16 h-16 rounded-[1.75rem] bg-primary/10 text-primary flex items-center justify-center border border-primary/20">
+            <FileText className="w-8 h-8" />
+          </div>
+          <div className="space-y-1">
+            <DialogTitle className="text-3xl font-black tracking-tight">New Knowledge Doc</DialogTitle>
+            <DialogDescription className="text-muted-foreground text-md">
+              Start a new thought or organize an existing project.
+            </DialogDescription>
+          </div>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-8 py-6">
           <div className="space-y-2">
-            <Label htmlFor="title" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Document Title</Label>
+            <Label htmlFor="title" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Document Title</Label>
             <Input 
               id="title" 
-              placeholder="Enter title..." 
+              placeholder="e.g. Q4 Growth Strategy" 
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="bg-white/[0.03] border-white/10 h-12 text-lg"
+              className="bg-white/[0.03] border-white/10 h-14 text-xl font-bold px-4 rounded-2xl focus:border-primary/50 transition-all"
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-6">
             <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                 <Layout className="w-3 h-3" /> Category
               </Label>
               <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger className="bg-white/[0.03] border-white/10 h-10">
+                <SelectTrigger className="bg-white/[0.03] border-white/10 h-12 rounded-xl">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent className="glass-panel border-white/10">
@@ -92,15 +94,15 @@ export function CreateNoteModal() {
               </Select>
             </div>
             <div className="space-y-2">
-              <Label className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+              <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
                 <Layout className="w-3 h-3" /> Group
               </Label>
               <Select value={groupId} onValueChange={setGroupId}>
-                <SelectTrigger className="bg-white/[0.03] border-white/10 h-10">
-                  <SelectValue placeholder="None" />
+                <SelectTrigger className="bg-white/[0.03] border-white/10 h-12 rounded-xl">
+                  <SelectValue placeholder="Root level" />
                 </SelectTrigger>
                 <SelectContent className="glass-panel border-white/10">
-                  <SelectItem value="none">No Group</SelectItem>
+                  <SelectItem value="none">Root level (No group)</SelectItem>
                   {groups.map(g => (
                     <SelectItem key={g.id} value={g.id}>{g.name}</SelectItem>
                   ))}
@@ -110,36 +112,32 @@ export function CreateNoteModal() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="tags" className="text-xs font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-              <TagIcon className="w-3 h-3" /> Tags
+            <Label htmlFor="tags" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+              <TagIcon className="w-3 h-3" /> Tags (comma separated)
             </Label>
             <Input 
               id="tags" 
-              placeholder="e.g. strategy, 2024, draft" 
+              placeholder="strategy, draft, internal" 
               value={tags}
               onChange={(e) => setTags(e.target.value)}
-              className="bg-white/[0.03] border-white/10"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="content" className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Content</Label>
-            <Textarea 
-              id="content" 
-              placeholder="Start typing..." 
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              className="bg-white/[0.03] border-white/10 min-h-[120px] resize-none"
+              className="bg-white/[0.03] border-white/10 h-12 rounded-xl px-4"
             />
           </div>
         </div>
 
-        <DialogFooter className="gap-3">
-          <Button variant="ghost" onClick={() => setCreateNoteModalOpen(false)} className="rounded-xl px-6 border border-white/5 hover:bg-white/5">
-            Cancel
+        <DialogFooter className="gap-4">
+          <Button 
+            variant="ghost" 
+            onClick={() => setCreateNoteModalOpen(false)} 
+            className="rounded-2xl px-8 h-12 border border-white/5 hover:bg-white/5 font-bold"
+          >
+            Discard
           </Button>
-          <Button onClick={handleCreate} className="rounded-xl px-8 font-bold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20">
-            Create Document
+          <Button 
+            onClick={handleCreate} 
+            className="rounded-2xl px-10 h-12 font-bold bg-primary hover:bg-primary/90 shadow-2xl shadow-primary/20"
+          >
+            Create & Open Editor
           </Button>
         </DialogFooter>
       </DialogContent>

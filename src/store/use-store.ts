@@ -50,7 +50,7 @@ export interface Activity {
   timestamp: string;
   user: string;
   docRef?: string;
-  dateGroup?: string; // e.g., 'Today', 'Yesterday'
+  dateGroup?: string;
 }
 
 interface AppState {
@@ -60,6 +60,7 @@ interface AppState {
   selectedNoteId: string | null;
   sidebarOpen: boolean;
   searchOpen: boolean;
+  isSaving: boolean;
   
   // UI States
   isCreateNoteModalOpen: boolean;
@@ -67,7 +68,7 @@ interface AppState {
   isUploadModalOpen: boolean;
   
   // Actions
-  addNote: (note: Partial<Note>) => void;
+  addNote: (note: Partial<Note>) => string;
   updateNote: (id: string, updates: Partial<Note>) => void;
   deleteNote: (id: string) => void;
   addGroup: (group: Omit<Group, 'id' | 'noteCount' | 'lastModified'>) => void;
@@ -80,6 +81,7 @@ interface AppState {
   setCreateNoteModalOpen: (open: boolean) => void;
   setCreateGroupModalOpen: (open: boolean) => void;
   setUploadModalOpen: (open: boolean) => void;
+  setSaving: (saving: boolean) => void;
   addActivity: (activity: Omit<Activity, 'id' | 'timestamp' | 'user'>) => void;
   createVersion: (noteId: string, label: string) => void;
   restoreVersion: (noteId: string, versionId: string) => void;
@@ -89,7 +91,7 @@ const initialNotes: Note[] = [
   {
     id: '1',
     title: 'Project Phoenix Roadmap',
-    content: 'Phase 1: Research and development of core modules. Phase 2: User testing and feedback. Phase 3: Global launch.',
+    content: '<h1>Project Phoenix Roadmap</h1><p>Phase 1: Research and development of core modules.</p><p>Phase 2: User testing and feedback.</p><p>Phase 3: Global launch.</p>',
     tags: ['Strategy', '2024'],
     category: 'Work',
     lastEdited: '2 hours ago',
@@ -100,7 +102,7 @@ const initialNotes: Note[] = [
     groupId: 'g1-1',
     fileType: 'system_doc',
     versions: [
-      { id: 'v1', label: 'Initial Draft', timestamp: '3 hours ago', author: 'Alex Rivers', content: 'Initial project setup...', wordCount: 120 }
+      { id: 'v1', label: 'Initial Draft', timestamp: '3 hours ago', author: 'Alex Rivers', content: '<p>Initial project setup...</p>', wordCount: 120 }
     ]
   },
   {
@@ -117,21 +119,6 @@ const initialNotes: Note[] = [
     fileType: 'pdf',
     fileSize: '2.4 MB',
     url: '#'
-  },
-  {
-    id: 'f2',
-    title: 'Product_Mockups.png',
-    content: '',
-    tags: ['Design', 'UI'],
-    category: 'Research',
-    lastEdited: 'Yesterday',
-    author: 'Alex Rivers',
-    isFavorite: true,
-    isLocked: false,
-    hasAI: false,
-    fileType: 'image',
-    fileSize: '1.1 MB',
-    url: 'https://picsum.photos/seed/mockup/800/600'
   }
 ];
 
@@ -141,22 +128,19 @@ const initialGroups: Group[] = [
   { id: 'g2', name: 'Personal Life', description: 'Journal, habits, and fitness.', noteCount: 8, lastModified: '2 days ago', isLocked: true },
 ];
 
-const initialActivities: Activity[] = [
-  { id: 'a1', type: 'edit', description: 'Updated Project Phoenix Roadmap', timestamp: '5 mins ago', user: 'Alex Rivers', docRef: '1', dateGroup: 'Today' },
-  { id: 'a2', type: 'upload', description: 'Uploaded Financial_Report_Q3.pdf', timestamp: '3 hours ago', user: 'Alex Rivers', docRef: 'f1', dateGroup: 'Today' },
-  { id: 'a3', type: 'version', description: 'Created a new version of Project Phoenix Roadmap', timestamp: 'Yesterday', user: 'Alex Rivers', docRef: '1', dateGroup: 'Yesterday' }
-];
-
 export const useStore = create<AppState>((set) => ({
   notes: initialNotes,
   groups: initialGroups,
-  activities: initialActivities,
+  activities: [],
   selectedNoteId: null,
   sidebarOpen: true,
   searchOpen: false,
+  isSaving: false,
   isCreateNoteModalOpen: false,
   isCreateGroupModalOpen: false,
   isUploadModalOpen: false,
+
+  setSaving: (saving) => set({ isSaving: saving }),
 
   addActivity: (activity) => set((state) => ({
     activities: [
@@ -171,33 +155,38 @@ export const useStore = create<AppState>((set) => ({
     ]
   })),
 
-  addNote: (note) => set((state) => {
-    const newNote: Note = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: note.title || 'Untitled',
-      content: note.content || '',
-      tags: note.tags || [],
-      category: note.category || 'Work',
-      lastEdited: 'Just now',
-      author: 'Alex Rivers',
-      isFavorite: false,
-      isLocked: false,
-      hasAI: false,
-      fileType: note.fileType || 'system_doc',
-      ...note
-    };
-    
-    return { 
-      notes: [newNote, ...state.notes],
-      activities: [
-        { id: Math.random().toString(36).substr(2, 9), type: 'create', description: `Created: ${newNote.title}`, timestamp: 'Just now', user: 'Alex Rivers', docRef: newNote.id, dateGroup: 'Today' },
-        ...state.activities
-      ]
-    };
-  }),
+  addNote: (note) => {
+    const id = Math.random().toString(36).substr(2, 9);
+    set((state) => {
+      const newNote: Note = {
+        id,
+        title: note.title || 'Untitled document',
+        content: note.content || '',
+        tags: note.tags || [],
+        category: note.category || 'Work',
+        lastEdited: 'Just now',
+        author: 'Alex Rivers',
+        isFavorite: false,
+        isLocked: false,
+        hasAI: false,
+        fileType: note.fileType || 'system_doc',
+        ...note
+      };
+      
+      return { 
+        notes: [newNote, ...state.notes],
+        selectedNoteId: id,
+        activities: [
+          { id: Math.random().toString(36).substr(2, 9), type: 'create', description: `Created: ${newNote.title}`, timestamp: 'Just now', user: 'Alex Rivers', docRef: newNote.id, dateGroup: 'Today' },
+          ...state.activities
+        ]
+      };
+    });
+    return id;
+  },
 
   updateNote: (id, updates) => set((state) => ({
-    notes: state.notes.map((n) => n.id === id ? { ...n, ...updates } : n)
+    notes: state.notes.map((n) => n.id === id ? { ...n, ...updates, lastEdited: 'Just now' } : n)
   })),
 
   deleteNote: (id) => set((state) => ({
