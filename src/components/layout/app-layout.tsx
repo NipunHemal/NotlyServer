@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from '@/components/ui/sidebar';
-import { Home, FileText, FolderOpen, Clock, Users, Star, Activity, Trash2, Settings, Search, Plus, Bell, ChevronRight } from 'lucide-react';
+import { Home, FileText, FolderOpen, Clock, Users, Star, Activity, Trash2, Settings, Search, Plus, Bell, ChevronRight, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/store/use-store';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,10 +13,11 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { CreateNoteModal } from '@/components/modals/create-note-modal';
 import { CreateGroupModal } from '@/components/modals/create-group-modal';
+import { GlobalSearch } from '@/components/search/global-search';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { sidebarOpen, setCreateNoteModalOpen } = useStore();
+  const { sidebarOpen, setCreateNoteModalOpen, setSearchOpen } = useStore();
 
   const menuItems = [
     { icon: Home, label: 'Home', href: '/' },
@@ -54,7 +55,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                       >
                         <Link href={item.href} className="flex items-center gap-3 py-2 px-3 rounded-md">
                           <item.icon className="w-5 h-5" />
-                          <span>{item.label}</span>
+                          <span className="text-sm font-medium">{item.label}</span>
                         </Link>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -70,8 +71,8 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <AvatarFallback>AR</AvatarFallback>
               </Avatar>
               <div className="flex flex-col min-w-0">
-                <span className="text-sm font-medium truncate text-white">Alex Rivers</span>
-                <span className="text-xs text-muted-foreground truncate">Pro Plan</span>
+                <span className="text-sm font-bold truncate text-white">Alex Rivers</span>
+                <span className="text-[10px] text-muted-foreground truncate uppercase font-black tracking-widest">Pro Plan</span>
               </div>
             </div>
           </SidebarFooter>
@@ -80,25 +81,31 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
         <main className="flex-1 flex flex-col min-w-0 relative">
           <header className="h-16 flex items-center justify-between px-8 border-b border-white/5 bg-background/50 backdrop-blur-md sticky top-0 z-30">
             <div className="flex items-center gap-4 flex-1 max-w-2xl">
-              <div className="relative w-full group">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                <Input 
-                  placeholder="Search notes, tags, collaborators..." 
-                  className="w-full bg-white/[0.03] border-white/10 pl-10 focus:ring-primary/20 transition-all text-white"
-                />
+              <div 
+                className="relative w-full group cursor-pointer"
+                onClick={() => setSearchOpen(true)}
+              >
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                <div className="w-full bg-white/[0.03] border border-white/10 h-10 rounded-xl pl-10 pr-4 flex items-center justify-between text-muted-foreground text-sm hover:border-white/20 transition-all">
+                  <span>Search everything...</span>
+                  <div className="flex items-center gap-1.5 opacity-50">
+                    <kbd className="bg-white/5 px-1.5 py-0.5 rounded border border-white/10 text-[10px] font-mono">⌘</kbd>
+                    <kbd className="bg-white/5 px-1.5 py-0.5 rounded border border-white/10 text-[10px] font-mono">K</kbd>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="flex items-center gap-4 ml-4">
-              <Button variant="ghost" size="icon" className="relative hover:bg-white/5">
+              <Button variant="ghost" size="icon" className="relative hover:bg-white/5 rounded-xl">
                 <Bell className="w-5 h-5" />
-                <span className="absolute top-2 right-2 w-2 h-2 bg-primary rounded-full ring-2 ring-background"></span>
+                <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-primary rounded-full ring-2 ring-background"></span>
               </Button>
               <Button 
                 onClick={() => setCreateNoteModalOpen(true)}
-                className="rounded-full px-6 gap-2 bg-primary hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 text-white font-bold"
+                className="rounded-xl px-6 gap-2 bg-primary hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 text-white font-bold"
               >
                 <Plus className="w-4 h-4" />
-                <span className="hidden sm:inline">New Note</span>
+                <span className="hidden sm:inline">New Document</span>
               </Button>
             </div>
           </header>
@@ -120,6 +127,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
       
       {/* Global Modals */}
+      <GlobalSearch />
       <CreateNoteModal />
       <CreateGroupModal />
     </SidebarProvider>
