@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from 'react';
@@ -16,7 +17,6 @@ export default function Home() {
   const { notes, groups, setCreateNoteModalOpen } = useStore();
   const router = useRouter();
   
-  // Sort notes by last activity (mocking it with current list)
   const recentNotes = notes.slice(0, 4);
   const activeGroups = groups.slice(0, 3);
 
