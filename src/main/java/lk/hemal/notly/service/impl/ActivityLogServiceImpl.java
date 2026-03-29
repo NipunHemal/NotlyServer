@@ -1,6 +1,7 @@
-package lk.hemal.notly.service;
+package lk.hemal.notly.service.impl;
 
 import lk.hemal.notly.repo.ActivityLogRepo;
+import lk.hemal.notly.service.ActivityLogService;
 
 public class ActivityLogServiceImpl implements ActivityLogService {
 
