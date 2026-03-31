@@ -1,0 +1,79 @@
+package lk.hemal.notly.config;
+
+import lk.hemal.notly.security.JwtAuthenticationFilter;
+import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.List;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+@RequiredArgsConstructor
+public class SecurityConfig {
+    private final JwtAuthenticationFilter jwtAuthFilter;
+//    private final OAuth2SuccessHandler    oAuth2SuccessHandler;
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(
+                                "/api/v1/auth/**", "/oauth2/**", "/login/oauth2/**",
+                                "/api/v1/notes/public/**", "/actuator/health",
+                                "/swagger-ui/**", "/v3/api-docs/**"
+                        ).permitAll()
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/notes/**").hasRole("USER")
+                        .anyRequest().authenticated()
+                )
+//                .oauth2Login(oauth2 -> oauth2
+//                        .authorizationEndpoint(e -> e.baseUri("/oauth2/authorize"))
+//                        .redirectionEndpoint(e -> e.baseUri("/login/oauth2/callback/*"))
+//                        .successHandler(oAuth2SuccessHandler)
+//                )
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint((req, res, e) -> {
+                            res.setContentType("application/json");
+                            res.setStatus(401);
+                            res.getWriter().write("{\"success\":false,\"message\":\"Unauthorized. Please login.\"}");
+                        })
+                        .accessDeniedHandler((req, res, e) -> {
+                            res.setContentType("application/json");
+                            res.setStatus(403);
+                            res.getWriter().write("{\"success\":false,\"message\":\"Access denied.\"}");
+                        })
+                )
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+        return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOriginPatterns(List.of(
+                "http://localhost:3000", "http://localhost:5173", "https://yournotes.app"));
+        config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
+        config.setAllowedHeaders(List.of("Authorization","Content-Type","X-Requested-With","Accept"));
+        config.setExposedHeaders(List.of("Authorization"));
+        config.setAllowCredentials(true);
+        config.setMaxAge(3600L);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
+    }
+}
