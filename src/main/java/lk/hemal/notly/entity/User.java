@@ -34,14 +34,8 @@ public class User extends BaseEntity implements UserDetails {
     @Column(name = "oauth_provider", length = 30)
     private OAuthProvider oauthProvider;
 
-    @Column(name = "google_id", length = 255)
-    private String googleId;
-
-    @Column(name = "github_id", length = 255)
-    private String githubId;
-
-    @Column(name = "facebook_id" , length = 255)
-    private String facebookId;
+    @Column(name = "provider_id", length = 255)
+    private String providerId;
 
     @Column(name = "is_email_verified", nullable = false)
     private boolean isEmailVerified = false;
