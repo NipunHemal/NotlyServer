@@ -1,4 +1,4 @@
-package lk.hemal.notly.config;
+package lk.hemal.notly.config.security;
 
 import lk.hemal.notly.service.CustomUserDetailsService;
 import lombok.RequiredArgsConstructor;
@@ -11,14 +11,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @Configuration
-//@RequiredArgsConstructor
+@RequiredArgsConstructor
 public class ApplicationConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
-
-    public ApplicationConfig(CustomUserDetailsService customUserDetailsService) {
-        this.customUserDetailsService = customUserDetailsService;
-    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {

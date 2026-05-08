@@ -1,5 +1,6 @@
-package lk.hemal.notly.config;
+package lk.hemal.notly.config.security;
 
+import lk.hemal.notly.config.ApiConfig;
 import lk.hemal.notly.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -22,7 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthFilter;
-//    private final OAuth2SuccessHandler    oAuth2SuccessHandler;
+    private final ApiConfig apiConfig;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -33,12 +34,12 @@ public class SecurityConfig {
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
-                                "/api/v1/auth/**", "/oauth2/**", "/login/oauth2/**",
-                                "/api/v1/notes/public/**", "/actuator/health",
+                                ApiConfig.API_BASE_PATH +"/auth/**", "/oauth2/**", "/login/oauth2/**",
+                                ApiConfig.API_BASE_PATH+"/notes/public/**", "/actuator/health",
                                 "/swagger-ui/**", "/v3/api-docs/**"
                         ).permitAll()
-                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
-                        .requestMatchers("/api/v1/notes/**").hasRole("USER")
+                        .requestMatchers(ApiConfig.API_BASE_PATH+"/admin/**").hasRole("ADMIN")
+                        .requestMatchers(ApiConfig.API_BASE_PATH+"/notes/**").hasRole("USER")
                         .anyRequest().authenticated()
                 )
 //                .oauth2Login(oauth2 -> oauth2
@@ -65,12 +66,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of(
-                "http://localhost:3000", "http://localhost:5173", "https://yournotes.app"));
-        config.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization","Content-Type","X-Requested-With","Accept"));
+        config.setAllowedOriginPatterns(List.of(apiConfig.getAllowedOrigins()));
+        config.setAllowedMethods(List.of(apiConfig.getAllowedMethods()));
+        config.setAllowedHeaders(List.of(apiConfig.getAllowedHeaders()));
         config.setExposedHeaders(List.of("Authorization"));
-        config.setAllowCredentials(true);
+        config.setAllowCredentials(apiConfig.isAllowedCredentials());
         config.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
