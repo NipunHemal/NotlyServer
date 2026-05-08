@@ -19,6 +19,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class User extends BaseEntity implements UserDetails {
 
     @Column(name = "username", nullable = false, unique = true, length = 50)

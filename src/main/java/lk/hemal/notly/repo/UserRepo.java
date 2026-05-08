@@ -2,7 +2,10 @@ package lk.hemal.notly.repo;
 
 import lk.hemal.notly.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
+import javax.swing.text.html.Option;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -11,6 +14,11 @@ public interface  UserRepo extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
 
     Optional<User> findByUsername(String username);
+
+    Optional<User> findUserById(UUID id);
+
+    @Query("SELECT u FROM User u WHERE u.email = :identifier OR u.username = :identifier")
+    Optional<User> findByEmailOrUsername(@Param("identifier") String identifier);
 
     Optional<User> findByOauthProviderAndProviderId(
             User.OAuthProvider oauthProvider,
@@ -21,14 +29,6 @@ public interface  UserRepo extends JpaRepository<User, UUID> {
     boolean existsByUsername(String username);
 
     // ── Custom JPQL Query ─────────────────────────────────────
-
-    // allow login email or password
-//    @Query("""
-//        SELECT u FROM User u
-//        WHERE u.email = :identifier
-//           OR u.username = :identifier
-//    """)
-//    Optional<User> findByEmailOrUsername(@Param("identifier") String identifier);
 
     // if deactivate user then use soft delete
 //    @Modifying
