@@ -19,10 +19,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import java.io.IOException;
 import java.util.UUID;
 
-/**
- * සෑම HTTP request එකකම JWT token check කරන filter.
- * OncePerRequestFilter — request එකකට filter එක වරක් පමණක් run වෙනවා.
- */
 @Slf4j
 @Component
 @RequiredArgsConstructor
