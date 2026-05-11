@@ -80,6 +80,10 @@ public class JwtUtil {
         return "REFRESH".equals(extractClaim(token, "type"));
     }
 
+    public boolean isRefreshTokenValid(String token) {
+        return isTokenValid(token) && isRefreshToken(token);
+    }
+
     // ── Extraction Methods ──────────────────────────────────────
 
     // User ID (Subject) එක ගන්න

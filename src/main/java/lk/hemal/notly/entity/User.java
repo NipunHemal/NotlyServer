@@ -50,6 +50,9 @@ public class User extends BaseEntity implements UserDetails {
     @Column(name = "is_active", nullable = false)
     private boolean isActive = true;
 
+    @Column(name = "current_refresh_token", length = 500)
+    private String currentRefreshToken;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)
     private SystemRole role = SystemRole.USER;

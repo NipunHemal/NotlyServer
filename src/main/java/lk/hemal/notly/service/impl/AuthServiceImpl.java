@@ -1,6 +1,7 @@
 package lk.hemal.notly.service.impl;
 
 import lk.hemal.notly.dto.request.LoginRequestDto;
+import lk.hemal.notly.dto.request.RefreshRequestDto;
 import lk.hemal.notly.dto.request.RegisterRequestDto;
 import lk.hemal.notly.dto.response.AuthResponseDto;
 import lk.hemal.notly.entity.User;
@@ -17,6 +18,8 @@ import org.springframework.security.authentication.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -89,12 +92,54 @@ public class AuthServiceImpl implements AuthService {
         return buildAuthResponse(user);
     }
 
+    @Transactional
+    public AuthResponseDto refresh(RefreshRequestDto req) {
+        String refreshToken = req.getRefreshToken();
+
+        if (!jwtService.isRefreshTokenValid(refreshToken)) {
+            throw new NotlyException(ErrorCode.INVALID_CREDENTIALS, "Invalid or expired refresh token");
+        }
+
+        String userId = jwtService.extractUserId(refreshToken);
+        User user = userRepo.findById(UUID.fromString(userId))
+                .orElseThrow(() -> new NotlyException(ErrorCode.INVALID_CREDENTIALS, "User not found"));
+
+        if (user.getCurrentRefreshToken() != null && !user.getCurrentRefreshToken().equals(refreshToken)) {
+            throw new NotlyException(ErrorCode.INVALID_CREDENTIALS, "Refresh token has been revoked");
+        }
+
+        return buildAuthResponse(user);
+    }
+
+    @Transactional
+    public void logout(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new NotlyException(ErrorCode.INVALID_CREDENTIALS, "Refresh token is required for logout");
+        }
+
+        if (!jwtService.isRefreshTokenValid(refreshToken)) {
+            log.warn("[AUTH] Logout attempt with invalid token");
+            return;
+        }
+
+        String userId = jwtService.extractUserId(refreshToken);
+        User user = userRepo.findById(UUID.fromString(userId))
+                .orElseThrow(() -> new NotlyException(ErrorCode.INVALID_CREDENTIALS, "User not found"));
+
+        user.setCurrentRefreshToken(null);
+        userRepo.save(user);
+        log.info("[AUTH] Logout: id={} email={}", user.getId(), user.getEmail());
+    }
+
 
     // ── Private Helpers ────────────────────────────────────────
 
     private AuthResponseDto buildAuthResponse(User user) {
         String accessToken  = jwtService.generateAccessToken(user);
         String refreshToken = jwtService.generateRefreshToken(user);
+
+        user.setCurrentRefreshToken(refreshToken);
+        userRepo.save(user);
 
         return new AuthResponseDto(accessToken, refreshToken, userMapper.toDto(user));
     }
