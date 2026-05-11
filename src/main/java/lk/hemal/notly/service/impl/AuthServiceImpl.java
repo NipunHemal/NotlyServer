@@ -4,8 +4,8 @@ import lk.hemal.notly.dto.request.LoginRequestDto;
 import lk.hemal.notly.dto.request.RegisterRequestDto;
 import lk.hemal.notly.dto.response.AuthResponseDto;
 import lk.hemal.notly.entity.User;
-import lk.hemal.notly.exception.AuthException;
-import lk.hemal.notly.exception.DuplicateResourceException;
+import lk.hemal.notly.exception.ErrorCode;
+import lk.hemal.notly.exception.NotlyException;
 import lk.hemal.notly.mapper.UserMapper;
 import lk.hemal.notly.repo.UserRepo;
 import lk.hemal.notly.repo.WorkspaceRepo;
@@ -13,7 +13,6 @@ import lk.hemal.notly.service.AuthService;
 import lk.hemal.notly.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -42,11 +41,12 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public AuthResponseDto register(RegisterRequestDto req) {
         if (userRepo.existsByUsername(req.getUsername())) {
-
-            throw new AuthException.UsernameAlreadyExistsException(req.getUsername());
+            throw new NotlyException(ErrorCode.USERNAME_ALREADY_EXISTS,
+                    "Username '" + req.getUsername() + "' is already taken");
         }
         if (userRepo.existsByEmail(req.getEmail())) {
-            throw new AuthException.EmailAlreadyExistsException(req.getEmail());
+            throw new NotlyException(ErrorCode.EMAIL_ALREADY_EXISTS,
+                    "Email '" + req.getEmail() + "' is already registered");
         }
 
         User user = User.builder()
@@ -74,16 +74,16 @@ public class AuthServiceImpl implements AuthService {
                     )
             );
         } catch (BadCredentialsException e) {
-            throw new AuthException.InvalidCredentialsException();
+            throw new NotlyException(ErrorCode.INVALID_CREDENTIALS);
         } catch (DisabledException e) {
-            throw new AuthException.AccountDisabledException();
+            throw new NotlyException(ErrorCode.ACCOUNT_DISABLED);
         } catch (LockedException e) {
-            throw new AuthException.AccountLocked();
+            throw new NotlyException(ErrorCode.ACCOUNT_LOCKED);
         }
 
         User user = userRepo
                 .findByEmailOrUsername(req.getEmailOrUsername())
-                .orElseThrow(AuthException.InvalidCredentialsException::new);
+                .orElseThrow(() -> new NotlyException(ErrorCode.INVALID_CREDENTIALS));
 
         log.info("[AUTH] Login: id={} email={}", user.getId(), user.getEmail());
         return buildAuthResponse(user);
