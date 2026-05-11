@@ -5,6 +5,8 @@ import lk.hemal.notly.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -15,6 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 import java.util.List;
 
 @Configuration
@@ -32,15 +35,37 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .headers(headers -> headers
+                        .frameOptions(Customizer.withDefaults())
+                )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                ApiConfig.API_BASE_PATH +"/auth/**", "/oauth2/**", "/login/oauth2/**",
-                                ApiConfig.API_BASE_PATH+"/notes/public/**", "/actuator/health",
-                                "/swagger-ui/**", "/v3/api-docs/**"
-                        ).permitAll()
-                        .requestMatchers(ApiConfig.API_BASE_PATH+"/admin/**").hasRole("ADMIN")
-                        .requestMatchers(ApiConfig.API_BASE_PATH+"/notes/**").hasRole("USER")
-                        .anyRequest().authenticated()
+                                // Public endpoints
+                                .requestMatchers(
+                                        "/",
+                                        "/test",
+                                        ApiConfig.API_BASE_PATH + "/auth/**",
+                                        "/oauth2/**",
+                                        "/login/oauth2/**",
+                                        ApiConfig.API_BASE_PATH + "/notes/public/**",
+                                        "/actuator/health"
+                                ).permitAll()
+
+                                // Swagger endpoints
+                                .requestMatchers(
+                                        "/swagger-ui.html",
+                                        "/swagger-ui/**",
+                                        "/v3/api-docs/**"
+                                ).permitAll()
+//                        .requestMatchers(
+//                                ApiConfig.API_BASE_PATH +"/auth/**", "/oauth2/**", "/login/oauth2/**",
+//                                ApiConfig.API_BASE_PATH+"/notes/public/**", "/actuator/health",
+//                                "/swagger-ui/**", "/v3/api-docs/**"
+//                        ).permitAll()
+                                .requestMatchers(ApiConfig.API_BASE_PATH + "/admin/**").hasAuthority("ADMIN")
+                                .requestMatchers(ApiConfig.API_BASE_PATH + "/notes/**").hasAuthority("USER")
+                                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+
+                                .anyRequest().authenticated()
                 )
 //                .oauth2Login(oauth2 -> oauth2
 //                        .authorizationEndpoint(e -> e.baseUri("/oauth2/authorize"))
