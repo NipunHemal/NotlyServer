@@ -23,8 +23,8 @@ public class CustomUserDetailsServiceImpl implements CustomUserDetailsService {
 
     // Spring Security Login process එකේදී පාවිච්චි කරන්න
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found with email: " + email));
+    public UserDetails loadUserByUsername(String emailOrUsername) throws UsernameNotFoundException {
+        return userRepository.findByEmailOrUsername(emailOrUsername)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + emailOrUsername));
     }
 }
