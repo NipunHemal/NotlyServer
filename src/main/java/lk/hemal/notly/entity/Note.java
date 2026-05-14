@@ -57,6 +57,15 @@ public class Note extends BaseEntity {
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 
+    @Column(name = "share_token", unique = true, length = 64)
+    private String shareToken;
+
+    @Column(name = "archived_at")
+    private LocalDateTime archivedAt;
+
+    @Column(name = "sort_order", nullable = false)
+    private int sortOrder = 0;
+
     // ── Full-text search vector (managed by Postgres trigger) ──
     // Stored as tsvector in DB; not mapped in JPA — queried via native query.
 

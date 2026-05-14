@@ -18,7 +18,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-class NoteTag {
+public class NoteTag {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

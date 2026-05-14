@@ -14,7 +14,7 @@ import java.util.UUID;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-class NoteMedia {
+public class NoteMedia {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)

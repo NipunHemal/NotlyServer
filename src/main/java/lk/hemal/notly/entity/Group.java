@@ -2,7 +2,10 @@ package lk.hemal.notly.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -14,13 +17,14 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@SQLRestriction("deleted_at IS NULL")
+@SQLDelete(sql = "UPDATE groups SET deleted_at = NOW() WHERE id = ?")
 public class Group extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "workspace_id", nullable = false)
     private Workspace workspace;
 
-    // Self-join for nested groups (infinite hierarchy)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private Group parent;
@@ -46,8 +50,31 @@ public class Group extends BaseEntity {
     @Column(name = "is_favorite", nullable = false)
     private boolean isFavorite = false;
 
-    // ── Relations ──────────────────────────────────────────────
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visibility", nullable = false, length = 20)
+    private Visibility visibility = Visibility.PRIVATE;
 
-//    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-//    private List<Note> notes;
+    @Column(name = "is_secure", nullable = false)
+    private boolean isSecure = false;
+
+    @Column(name = "share_token", unique = true, length = 64)
+    private String shareToken;
+
+    @Column(name = "archived_at")
+    private LocalDateTime archivedAt;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
+    public void softDelete() {
+        this.deletedAt = LocalDateTime.now();
+    }
+
+    public void restore() {
+        this.deletedAt = null;
+    }
+
+    public enum Visibility {
+        PRIVATE, SHARED, PUBLIC
+    }
 }

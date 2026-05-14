@@ -1,38 +1,32 @@
 package lk.hemal.notly.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "collaborators",
-        uniqueConstraints = @UniqueConstraint(
-                name  = "uq_collaborator_note_user",
-                columnNames = {"note_id", "user_id"}
-        ),
+@Table(name = "group_collaborators",
+        uniqueConstraints = @UniqueConstraint(name = "uq_group_collab_group_user", columnNames = {"group_id", "user_id"}),
         indexes = {
-                @Index(name = "idx_collab_note", columnList = "note_id"),
-                @Index(name = "idx_collab_user", columnList = "user_id")
+                @Index(name = "idx_group_collab_group", columnList = "group_id"),
+                @Index(name = "idx_group_collab_user", columnList = "user_id")
         }
 )
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class Collaborator {
+public class GroupCollaborator {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "note_id", nullable = false)
-    private Note note;
+    @JoinColumn(name = "group_id", nullable = false)
+    private Group group;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "user_id", nullable = false)
@@ -40,7 +34,7 @@ public class Collaborator {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 20)
-    private CollaboratorRole role = CollaboratorRole.VIEWER;
+    private Role role = Role.VIEWER;
 
     @Column(name = "invited_at", nullable = false, updatable = false)
     private LocalDateTime invitedAt = LocalDateTime.now();
@@ -48,7 +42,7 @@ public class Collaborator {
     @Column(name = "accepted_at")
     private LocalDateTime acceptedAt;
 
-    public enum CollaboratorRole {
+    public enum Role {
         OWNER, EDITOR, VIEWER
     }
 }
