@@ -19,8 +19,9 @@ export function BreadcrumbNavigation({ currentGroupId }: BreadcrumbNavigationPro
 
     let current = groups.find(g => g.id === currentGroupId);
     while (current) {
-      crumbs.unshift({ name: current.name, href: `/groups/${current.id}` });
-      current = groups.find(g => g.id === current.parentId);
+      const node = current;
+      crumbs.unshift({ name: node.name, href: `/groups/${node.id}` });
+      current = groups.find(g => g.id === node.parentId);
     }
     return crumbs;
   };
@@ -29,7 +30,7 @@ export function BreadcrumbNavigation({ currentGroupId }: BreadcrumbNavigationPro
 
   return (
     <nav className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-      <Link href="/" className="hover:text-foreground transition-colors flex items-center gap-1">
+      <Link href="/dashboard" className="hover:text-foreground transition-colors flex items-center gap-1">
         <Home className="w-3.5 h-3.5" />
       </Link>
       <ChevronRight className="w-3.5 h-3.5 opacity-50" />

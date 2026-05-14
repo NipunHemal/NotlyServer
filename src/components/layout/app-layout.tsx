@@ -19,7 +19,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { sidebarOpen, setCreateNoteModalOpen, setSearchOpen } = useStore();
 
   const menuItems = [
-    { icon: Home, label: 'Home', href: '/' },
+    { icon: Home, label: 'Home', href: '/dashboard' },
     { icon: FileText, label: 'All Docs', href: '/docs' },
     { icon: FolderOpen, label: 'Groups', href: '/groups' },
     { icon: Activity, label: 'Activities', href: '/activities' },
@@ -30,10 +30,10 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     <SidebarProvider defaultOpen={sidebarOpen}>
       <div className="flex h-screen w-full bg-background overflow-hidden selection:bg-primary/30 selection:text-white">
         <Sidebar className="border-r border-white/5 bg-sidebar">
-          <SidebarHeader className="p-8">
-            <div className="flex items-center gap-4">
-              <div className="w-10 h-10 rounded-2xl bg-primary flex items-center justify-center text-white font-black text-2xl shadow-xl shadow-primary/20">C</div>
-              <span className="font-black text-xl tracking-tighter text-white">Cognito</span>
+          <SidebarHeader className="p-6">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-xl">N</div>
+              <span className="font-bold text-lg tracking-tight">Notly</span>
             </div>
           </SidebarHeader>
           <SidebarContent className="px-4">
