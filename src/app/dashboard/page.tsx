@@ -13,7 +13,7 @@ import { motion } from 'framer-motion';
 
 export default function Home() {
   const { notes, groups } = useStore();
-  const recentNotes = notes.slice(0, 3);
+  const recentNotes = notes.filter(n => !n.isDeleted).slice(0, 3);
 
   return (
     <AppLayout>

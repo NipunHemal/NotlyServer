@@ -17,8 +17,10 @@ export default function DocsPage() {
   const [search, setSearch] = useState('');
 
   const filteredNotes = notes.filter(n => 
-    n.title.toLowerCase().includes(search.toLowerCase()) || 
-    n.tags.some(t => t.toLowerCase().includes(search.toLowerCase()))
+    !n.isDeleted && (
+      n.title.toLowerCase().includes(search.toLowerCase()) || 
+      n.tags.some(t => t.toLowerCase().includes(search.toLowerCase()))
+    )
   );
 
   return (

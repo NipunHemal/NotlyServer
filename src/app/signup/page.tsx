@@ -7,9 +7,38 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { ArrowLeft, Github, Chrome } from 'lucide-react';
+import { ArrowLeft, Github, Chrome, Loader2 } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
+import { useRegister } from '@/service/query/useAuth';
+
+const signupSchema = z.object({
+  display_name: z.string().min(1, 'Full name is required'),
+  username: z.string().min(3, 'Username must be at least 3 characters'),
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
+
+type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
+  const { mutate: registerUser, isPending } = useRegister();
+  
+  const { register, handleSubmit, formState: { errors } } = useForm<SignupFormValues>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: {
+      display_name: '',
+      username: '',
+      email: '',
+      password: '',
+    },
+  });
+
+  const onSubmit = (data: SignupFormValues) => {
+    registerUser(data);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <Link 
@@ -31,10 +60,10 @@ export default function SignupPage() {
 
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" className="rounded-xl border-white/10 hover:bg-white/5 gap-2">
+            <Button variant="outline" className="rounded-xl border-white/10 hover:bg-white/5 gap-2" disabled={isPending}>
               <Chrome className="w-4 h-4" /> Google
             </Button>
-            <Button variant="outline" className="rounded-xl border-white/10 hover:bg-white/5 gap-2">
+            <Button variant="outline" className="rounded-xl border-white/10 hover:bg-white/5 gap-2" disabled={isPending}>
               <Github className="w-4 h-4" /> Github
             </Button>
           </div>
@@ -48,24 +77,66 @@ export default function SignupPage() {
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
-            <Input id="name" placeholder="John Doe" className="bg-white/5 border-white/10 rounded-xl" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" placeholder="name@example.com" className="bg-white/5 border-white/10 rounded-xl" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input id="password" type="password" className="bg-white/5 border-white/10 rounded-xl" />
-          </div>
-          
-          <Link href="/dashboard" className="block w-full">
-            <Button className="w-full bg-primary text-white hover:bg-primary/90 rounded-xl py-6 text-lg font-semibold shadow-lg">
-              Create Account
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="display_name">Full Name</Label>
+              <Input 
+                id="display_name" 
+                placeholder="John Doe" 
+                className="bg-white/5 border-white/10 rounded-xl" 
+                {...register('display_name')}
+                disabled={isPending}
+              />
+              {errors.display_name && <p className="text-xs text-destructive">{errors.display_name.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input 
+                id="username" 
+                placeholder="johndoe" 
+                className="bg-white/5 border-white/10 rounded-xl" 
+                {...register('username')}
+                disabled={isPending}
+              />
+              {errors.username && <p className="text-xs text-destructive">{errors.username.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <Input 
+                id="email" 
+                type="email" 
+                placeholder="name@example.com" 
+                className="bg-white/5 border-white/10 rounded-xl" 
+                {...register('email')}
+                disabled={isPending}
+              />
+              {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <Input 
+                id="password" 
+                type="password" 
+                className="bg-white/5 border-white/10 rounded-xl" 
+                {...register('password')}
+                disabled={isPending}
+              />
+              {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
+            </div>
+            
+            <Button 
+              type="submit"
+              className="w-full bg-primary text-white hover:bg-primary/90 rounded-xl py-6 text-lg font-semibold shadow-lg"
+              disabled={isPending}
+            >
+              {isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                  Creating account...
+                </>
+              ) : 'Create Account'}
             </Button>
-          </Link>
+          </form>
         </div>
 
         <p className="text-center text-sm text-muted-foreground">

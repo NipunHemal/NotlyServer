@@ -21,7 +21,7 @@ export default function GroupDetailsPage({ params }: { params: Promise<{ id: str
   const { groups, notes } = useStore();
   const group = groups.find(g => g.id === id);
   const subGroups = groups.filter(g => g.parentId === id);
-  const groupNotes = notes.filter(n => n.groupId === id);
+  const groupNotes = notes.filter(n => n.groupId === id && !n.isDeleted);
   
   const [view, setView] = React.useState<'grid' | 'list'>('grid');
   const [isLocked, setIsLocked] = React.useState(group?.isLocked || false);

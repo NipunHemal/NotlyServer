@@ -60,7 +60,7 @@ export function GlobalSearch() {
         </CommandEmpty>
 
         <CommandGroup heading="System Documents">
-          {notes.filter(n => n.fileType === 'system_doc').map(note => (
+          {notes.filter(n => n.fileType === 'system_doc' && !n.isDeleted).map(note => (
             <CommandItem 
               key={note.id} 
               onSelect={() => onSelectNote(note)}
@@ -83,7 +83,7 @@ export function GlobalSearch() {
         <CommandSeparator className="bg-white/5 my-2" />
 
         <CommandGroup heading="External Files">
-          {notes.filter(n => n.fileType !== 'system_doc').map(note => (
+          {notes.filter(n => n.fileType !== 'system_doc' && !n.isDeleted).map(note => (
             <CommandItem 
               key={note.id} 
               onSelect={() => onSelectNote(note)}

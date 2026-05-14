@@ -1,5 +1,5 @@
-
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 export type FileType = 'system_doc' | 'pdf' | 'text' | 'excel' | 'doc' | 'image' | 'file';
 
@@ -29,6 +29,8 @@ export interface Note {
   fileSize?: string;
   url?: string;
   versions?: DocVersion[];
+  isDeleted?: boolean;
+  deletedAt?: string;
 }
 
 export interface Group {
@@ -41,6 +43,18 @@ export interface Group {
   isLocked?: boolean;
   isShared?: boolean;
   collaborators?: { id: string; name: string; avatar: string; role: 'Owner' | 'Editor' | 'Viewer' }[];
+}
+
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  avatarUrl?: string;
+  displayName?: string;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+  emailVerified: boolean;
 }
 
 export interface Activity {
@@ -62,12 +76,21 @@ interface AppState {
   searchOpen: boolean;
   isSaving: boolean;
   
+  // Auth State
+  user: User | null;
+  accessToken: string | null;
+  refreshToken: string | null;
+  isAuthenticated: boolean;
+  
   // UI States
   isCreateNoteModalOpen: boolean;
   isCreateGroupModalOpen: boolean;
   isUploadModalOpen: boolean;
   
   // Actions
+  setAuth: (user: User, accessToken: string, refreshToken: string) => void;
+  clearAuth: () => void;
+  updateUser: (updates: Partial<User>) => void;
   addNote: (note: Partial<Note>) => string;
   updateNote: (id: string, updates: Partial<Note>) => void;
   deleteNote: (id: string) => void;
@@ -85,6 +108,9 @@ interface AppState {
   addActivity: (activity: Omit<Activity, 'id' | 'timestamp' | 'user'>) => void;
   createVersion: (noteId: string, label: string) => void;
   restoreVersion: (noteId: string, versionId: string) => void;
+  moveToBin: (id: string) => void;
+  restoreFromBin: (id: string) => void;
+  permanentDeleteNote: (id: string) => void;
 }
 
 const initialNotes: Note[] = [
@@ -128,130 +154,184 @@ const initialGroups: Group[] = [
   { id: 'g2', name: 'Personal Life', description: 'Journal, habits, and fitness.', noteCount: 8, lastModified: '2 days ago', isLocked: true },
 ];
 
-export const useStore = create<AppState>((set) => ({
-  notes: initialNotes,
-  groups: initialGroups,
-  activities: [],
-  selectedNoteId: null,
-  sidebarOpen: true,
-  searchOpen: false,
-  isSaving: false,
-  isCreateNoteModalOpen: false,
-  isCreateGroupModalOpen: false,
-  isUploadModalOpen: false,
-
-  setSaving: (saving) => set({ isSaving: saving }),
-
-  addActivity: (activity) => set((state) => ({
-    activities: [
-      {
-        ...activity,
-        id: Math.random().toString(36).substr(2, 9),
-        timestamp: 'Just now',
-        user: 'Alex Rivers',
-        dateGroup: 'Today'
-      },
-      ...state.activities
-    ]
-  })),
-
-  addNote: (note) => {
-    const id = Math.random().toString(36).substr(2, 9);
-    set((state) => {
-      const newNote: Note = {
-        id,
-        title: note.title || 'Untitled document',
-        content: note.content || '',
-        tags: note.tags || [],
-        category: note.category || 'Work',
-        lastEdited: 'Just now',
-        author: 'Alex Rivers',
-        isFavorite: false,
-        isLocked: false,
-        hasAI: false,
-        fileType: note.fileType || 'system_doc',
-        ...note
-      };
+export const useStore = create<AppState>()(
+  persist(
+    (set) => ({
+      notes: initialNotes,
+      groups: initialGroups,
+      activities: [],
+      selectedNoteId: null,
+      sidebarOpen: true,
+      searchOpen: false,
+      isSaving: false,
       
-      return { 
-        notes: [newNote, ...state.notes],
-        selectedNoteId: id,
+      user: null,
+      accessToken: null,
+      refreshToken: null,
+      isAuthenticated: false,
+
+      isCreateNoteModalOpen: false,
+      isCreateGroupModalOpen: false,
+      isUploadModalOpen: false,
+
+      setAuth: (user, accessToken, refreshToken) => set({ 
+        user, 
+        accessToken, 
+        refreshToken, 
+        isAuthenticated: true 
+      }),
+
+      clearAuth: () => set({ 
+        user: null, 
+        accessToken: null, 
+        refreshToken: null, 
+        isAuthenticated: false 
+      }),
+
+      updateUser: (updates) => set((state) => ({
+        user: state.user ? { ...state.user, ...updates } : null
+      })),
+
+      setSaving: (saving) => set({ isSaving: saving }),
+
+      addActivity: (activity) => set((state) => ({
         activities: [
-          { id: Math.random().toString(36).substr(2, 9), type: 'create', description: `Created: ${newNote.title}`, timestamp: 'Just now', user: 'Alex Rivers', docRef: newNote.id, dateGroup: 'Today' },
+          {
+            ...activity,
+            id: Math.random().toString(36).substr(2, 9),
+            timestamp: 'Just now',
+            user: state.user?.displayName || 'Alex Rivers',
+            dateGroup: 'Today'
+          },
           ...state.activities
         ]
-      };
-    });
-    return id;
-  },
+      })),
 
-  updateNote: (id, updates) => set((state) => ({
-    notes: state.notes.map((n) => n.id === id ? { ...n, ...updates, lastEdited: 'Just now' } : n)
-  })),
+      addNote: (note) => {
+        const id = Math.random().toString(36).substr(2, 9);
+        set((state) => {
+          const newNote: Note = {
+            id,
+            title: note.title || 'Untitled document',
+            content: note.content || '',
+            tags: note.tags || [],
+            category: note.category || 'Work',
+            lastEdited: 'Just now',
+            author: state.user?.displayName || 'Alex Rivers',
+            isFavorite: false,
+            isLocked: false,
+            hasAI: false,
+            fileType: note.fileType || 'system_doc',
+            ...note
+          };
+          
+          return { 
+            notes: [newNote, ...state.notes],
+            selectedNoteId: id,
+            activities: [
+              { id: Math.random().toString(36).substr(2, 9), type: 'create', description: `Created: ${newNote.title}`, timestamp: 'Just now', user: state.user?.displayName || 'Alex Rivers', docRef: newNote.id, dateGroup: 'Today' },
+              ...state.activities
+            ]
+          };
+        });
+        return id;
+      },
 
-  deleteNote: (id) => set((state) => ({
-    notes: state.notes.filter((n) => n.id !== id)
-  })),
+      updateNote: (id, updates) => set((state) => ({
+        notes: state.notes.map((n) => n.id === id ? { ...n, ...updates, lastEdited: 'Just now' } : n)
+      })),
 
-  addGroup: (group) => set((state) => {
-    const newGroup: Group = {
-      ...group,
-      id: Math.random().toString(36).substr(2, 9),
-      noteCount: 0,
-      lastModified: 'Just now',
-    };
-    return { 
-      groups: [...state.groups, newGroup],
-      activities: [{ id: Math.random().toString(36).substr(2, 9), type: 'create', description: `Created group: ${group.name}`, timestamp: 'Just now', user: 'Alex Rivers', dateGroup: 'Today' }, ...state.activities]
-    };
-  }),
+      deleteNote: (id) => set((state) => ({
+        notes: state.notes.filter((n) => n.id !== id)
+      })),
 
-  updateGroup: (id, updates) => set((state) => ({
-    groups: state.groups.map((g) => g.id === id ? { ...g, ...updates } : g)
-  })),
+      moveToBin: (id) => set((state) => ({
+        notes: state.notes.map((n) => n.id === id ? { ...n, isDeleted: true, deletedAt: new Date().toISOString() } : n),
+        activities: [{ id: Math.random().toString(36).substr(2, 9), type: 'delete', description: `Moved to bin: ${state.notes.find(n => n.id === id)?.title}`, timestamp: 'Just now', user: state.user?.displayName || 'Alex Rivers', docRef: id, dateGroup: 'Today' }, ...state.activities]
+      })),
 
-  deleteGroup: (id) => set((state) => ({
-    groups: state.groups.filter((g) => g.id !== id)
-  })),
+      restoreFromBin: (id) => set((state) => ({
+        notes: state.notes.map((n) => n.id === id ? { ...n, isDeleted: false, deletedAt: undefined } : n),
+        activities: [{ id: Math.random().toString(36).substr(2, 9), type: 'restore', description: `Restored from bin: ${state.notes.find(n => n.id === id)?.title}`, timestamp: 'Just now', user: state.user?.displayName || 'Alex Rivers', docRef: id, dateGroup: 'Today' }, ...state.activities]
+      })),
 
-  toggleFavorite: (id) => set((state) => ({
-    notes: state.notes.map((n) => n.id === id ? { ...n, isFavorite: !n.isFavorite } : n)
-  })),
+      permanentDeleteNote: (id) => set((state) => ({
+        notes: state.notes.filter((n) => n.id !== id)
+      })),
 
-  createVersion: (noteId, label) => set((state) => {
-    const note = state.notes.find(n => n.id === noteId);
-    if (!note) return state;
+      addGroup: (group) => set((state) => {
+        const newGroup: Group = {
+          ...group,
+          id: Math.random().toString(36).substr(2, 9),
+          noteCount: 0,
+          lastModified: 'Just now',
+        };
+        return { 
+          groups: [...state.groups, newGroup],
+          activities: [{ id: Math.random().toString(36).substr(2, 9), type: 'create', description: `Created group: ${group.name}`, timestamp: 'Just now', user: state.user?.displayName || 'Alex Rivers', dateGroup: 'Today' }, ...state.activities]
+        };
+      }),
 
-    const newVersion: DocVersion = {
-      id: Math.random().toString(36).substr(2, 9),
-      label,
-      timestamp: 'Just now',
-      author: 'Alex Rivers',
-      content: note.content,
-      wordCount: note.content.split(/\s+/).length
-    };
+      updateGroup: (id, updates) => set((state) => ({
+        groups: state.groups.map((g) => g.id === id ? { ...g, ...updates } : g)
+      })),
 
-    return {
-      notes: state.notes.map(n => n.id === noteId ? { ...n, versions: [newVersion, ...(n.versions || [])] } : n),
-      activities: [{ id: Math.random().toString(36).substr(2, 9), type: 'version', description: `Created version ${label} for ${note.title}`, timestamp: 'Just now', user: 'Alex Rivers', docRef: noteId, dateGroup: 'Today' }, ...state.activities]
-    };
-  }),
+      deleteGroup: (id) => set((state) => ({
+        groups: state.groups.filter((g) => g.id !== id)
+      })),
 
-  restoreVersion: (noteId, versionId) => set((state) => {
-    const note = state.notes.find(n => n.id === noteId);
-    const version = note?.versions?.find(v => v.id === versionId);
-    if (!note || !version) return state;
+      toggleFavorite: (id) => set((state) => ({
+        notes: state.notes.map((n) => n.id === id ? { ...n, isFavorite: !n.isFavorite } : n)
+      })),
 
-    return {
-      notes: state.notes.map(n => n.id === noteId ? { ...n, content: version.content, lastEdited: 'Just now' } : n),
-      activities: [{ id: Math.random().toString(36).substr(2, 9), type: 'restore', description: `Restored version ${version.label} for ${note.title}`, timestamp: 'Just now', user: 'Alex Rivers', docRef: noteId, dateGroup: 'Today' }, ...state.activities]
-    };
-  }),
+      createVersion: (noteId, label) => set((state) => {
+        const note = state.notes.find(n => n.id === noteId);
+        if (!note) return state;
 
-  setSelectedNote: (id) => set({ selectedNoteId: id }),
-  setSidebarOpen: (open) => set({ sidebarOpen: open }),
-  setSearchOpen: (open) => set({ searchOpen: open }),
-  setCreateNoteModalOpen: (open) => set({ isCreateNoteModalOpen: open }),
-  setCreateGroupModalOpen: (open) => set({ isCreateGroupModalOpen: open }),
-  setUploadModalOpen: (open) => set({ isUploadModalOpen: open }),
-}));
+        const newVersion: DocVersion = {
+          id: Math.random().toString(36).substr(2, 9),
+          label,
+          timestamp: 'Just now',
+          author: state.user?.displayName || 'Alex Rivers',
+          content: note.content,
+          wordCount: note.content.split(/\s+/).length
+        };
+
+        return {
+          notes: state.notes.map(n => n.id === noteId ? { ...n, versions: [newVersion, ...(n.versions || [])] } : n),
+          activities: [{ id: Math.random().toString(36).substr(2, 9), type: 'version', description: `Created version ${label} for ${note.title}`, timestamp: 'Just now', user: state.user?.displayName || 'Alex Rivers', docRef: noteId, dateGroup: 'Today' }, ...state.activities]
+        };
+      }),
+
+      restoreVersion: (noteId, versionId) => set((state) => {
+        const note = state.notes.find(n => n.id === noteId);
+        const version = note?.versions?.find(v => v.id === versionId);
+        if (!note || !version) return state;
+
+        return {
+          notes: state.notes.map(n => n.id === noteId ? { ...n, content: version.content, lastEdited: 'Just now' } : n),
+          activities: [{ id: Math.random().toString(36).substr(2, 9), type: 'restore', description: `Restored version ${version.label} for ${note.title}`, timestamp: 'Just now', user: state.user?.displayName || 'Alex Rivers', docRef: noteId, dateGroup: 'Today' }, ...state.activities]
+        };
+      }),
+
+      setSelectedNote: (id) => set({ selectedNoteId: id }),
+      setSidebarOpen: (open) => set({ sidebarOpen: open }),
+      setSearchOpen: (open) => set({ searchOpen: open }),
+      setCreateNoteModalOpen: (open) => set({ isCreateNoteModalOpen: open }),
+      setCreateGroupModalOpen: (open) => set({ isCreateGroupModalOpen: open }),
+      setUploadModalOpen: (open) => set({ isUploadModalOpen: open }),
+    }),
+    {
+      name: 'notly-storage',
+      storage: createJSONStorage(() => localStorage),
+      partialize: (state) => ({
+        user: state.user,
+        accessToken: state.accessToken,
+        refreshToken: state.refreshToken,
+        isAuthenticated: state.isAuthenticated,
+        sidebarOpen: state.sidebarOpen,
+        notes: state.notes, // Persist notes including deleted ones
+      }),
+    }
+  )
+);

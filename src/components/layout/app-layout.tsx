@@ -3,7 +3,7 @@
 
 import React from 'react';
 import { SidebarProvider, Sidebar, SidebarContent, SidebarHeader, SidebarFooter, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarGroup, SidebarGroupLabel, SidebarGroupContent } from '@/components/ui/sidebar';
-import { Home, FileText, FolderOpen, Clock, Users, Star, Activity, Trash2, Settings, Search, Plus, Bell, ChevronRight, Sparkles } from 'lucide-react';
+import { Home, FileText, FolderOpen, Clock, Users, Star, Activity, Trash2, Settings, Search, Plus, Bell, ChevronRight, Sparkles, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@/store/use-store';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -13,16 +13,20 @@ import { usePathname } from 'next/navigation';
 import { CreateNoteModal } from '@/components/modals/create-note-modal';
 import { CreateGroupModal } from '@/components/modals/create-group-modal';
 import { GlobalSearch } from '@/components/search/global-search';
+import { useLogout } from '@/service/query/useAuth';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { sidebarOpen, setCreateNoteModalOpen, setSearchOpen } = useStore();
+  const { sidebarOpen, setCreateNoteModalOpen, setSearchOpen, user } = useStore();
+  const logoutMutation = useLogout();
 
   const menuItems = [
     { icon: Home, label: 'Home', href: '/dashboard' },
     { icon: FileText, label: 'All Docs', href: '/docs' },
     { icon: FolderOpen, label: 'Groups', href: '/groups' },
     { icon: Activity, label: 'Activities', href: '/activities' },
+    { icon: Trash2, label: 'Bin', href: '/bin' },
     { icon: Settings, label: 'Settings', href: '/settings' },
   ];
 
@@ -78,16 +82,45 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </SidebarGroup>
           </SidebarContent>
           <SidebarFooter className="p-6">
-            <div className="flex items-center gap-4 p-3 rounded-[1.75rem] bg-white/[0.03] border border-white/5">
-              <Avatar className="w-10 h-10 border-2 border-primary/20">
-                <AvatarImage src="https://picsum.photos/seed/user-42/100/100" />
-                <AvatarFallback>AR</AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col min-w-0">
-                <span className="text-sm font-black truncate text-white leading-tight">Alex Rivers</span>
-                <span className="text-[10px] text-primary truncate uppercase font-black tracking-widest">Pro Account</span>
-              </div>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <div className="flex items-center gap-4 p-3 rounded-[1.75rem] bg-white/[0.03] border border-white/5 cursor-pointer hover:bg-white/5 transition-all">
+                  <Avatar className="w-10 h-10 border-2 border-primary/20">
+                    <AvatarImage src={user?.avatarUrl || "https://picsum.photos/seed/user-42/100/100"} />
+                    <AvatarFallback>{user?.displayName?.slice(0, 2).toUpperCase() || 'US'}</AvatarFallback>
+                  </Avatar>
+                  <div className="flex flex-col min-w-0 flex-1">
+                    <span className="text-sm font-black truncate text-white leading-tight">
+                      {user?.displayName || user?.username || 'User'}
+                    </span>
+                    <span className="text-[10px] text-primary truncate uppercase font-black tracking-widest">
+                      {user?.role || 'Pro Account'}
+                    </span>
+                  </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground/40" />
+                </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-64 rounded-2xl p-2 bg-popover/95 backdrop-blur-xl border-white/5 shadow-2xl" side="right" align="end" sideOffset={10}>
+                <DropdownMenuLabel className="px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">Account</DropdownMenuLabel>
+                <DropdownMenuSeparator className="bg-white/5" />
+                <DropdownMenuItem className="rounded-xl h-10 focus:bg-white/5 cursor-pointer gap-3">
+                  <Settings className="w-4 h-4" />
+                  <span>Profile Settings</span>
+                </DropdownMenuItem>
+                <DropdownMenuItem className="rounded-xl h-10 focus:bg-white/5 cursor-pointer gap-3">
+                  <Bell className="w-4 h-4" />
+                  <span>Notifications</span>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator className="bg-white/5" />
+                <DropdownMenuItem 
+                  className="rounded-xl h-10 focus:bg-destructive/10 text-destructive focus:text-destructive cursor-pointer gap-3"
+                  onClick={() => logoutMutation.mutate()}
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Log out</span>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </SidebarFooter>
         </Sidebar>
 

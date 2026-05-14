@@ -7,7 +7,7 @@ import { Note, useStore, FileType } from '@/store/use-store';
 import { 
   MoreVertical, Star, Lock, Sparkles, Clock, Tag, 
   FileText, Image as ImageIcon, FileCode, FileSpreadsheet, File as FileIcon,
-  Download, Eye
+  Download, Eye, RefreshCcw, Trash
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -30,7 +30,7 @@ const getFileIcon = (type: FileType) => {
 };
 
 export function DocCard({ note }: DocCardProps) {
-  const { toggleFavorite, deleteNote } = useStore();
+  const { toggleFavorite, moveToBin, restoreFromBin, permanentDeleteNote } = useStore();
   const isSystemDoc = note.fileType === 'system_doc';
 
   return (
@@ -52,17 +52,37 @@ export function DocCard({ note }: DocCardProps) {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48 glass-panel border-white/10">
-              <DropdownMenuItem className="cursor-pointer gap-2"><Eye className="w-4 h-4" /> View</DropdownMenuItem>
-              {!isSystemDoc && <DropdownMenuItem className="cursor-pointer gap-2"><Download className="w-4 h-4" /> Download</DropdownMenuItem>}
-              <DropdownMenuItem className="cursor-pointer gap-2"><Lock className="w-4 h-4" /> Lock</DropdownMenuItem>
-              <DropdownMenuItem className="cursor-pointer gap-2">Share</DropdownMenuItem>
-              <DropdownMenuSeparator className="bg-white/10" />
-              <DropdownMenuItem 
-                className="cursor-pointer gap-2 text-destructive focus:text-destructive"
-                onClick={() => deleteNote(note.id)}
-              >
-                Delete
-              </DropdownMenuItem>
+              {note.isDeleted ? (
+                <>
+                  <DropdownMenuItem 
+                    className="cursor-pointer gap-2 text-primary focus:text-primary"
+                    onClick={() => restoreFromBin(note.id)}
+                  >
+                    <RefreshCcw className="w-4 h-4" /> Restore
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  <DropdownMenuItem 
+                    className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+                    onClick={() => permanentDeleteNote(note.id)}
+                  >
+                    <Trash className="w-4 h-4" /> Delete Permanently
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <>
+                  <DropdownMenuItem className="cursor-pointer gap-2"><Eye className="w-4 h-4" /> View</DropdownMenuItem>
+                  {!isSystemDoc && <DropdownMenuItem className="cursor-pointer gap-2"><Download className="w-4 h-4" /> Download</DropdownMenuItem>}
+                  <DropdownMenuItem className="cursor-pointer gap-2"><Lock className="w-4 h-4" /> Lock</DropdownMenuItem>
+                  <DropdownMenuItem className="cursor-pointer gap-2">Share</DropdownMenuItem>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  <DropdownMenuItem 
+                    className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+                    onClick={() => moveToBin(note.id)}
+                  >
+                    <Trash className="w-4 h-4" /> Move to Bin
+                  </DropdownMenuItem>
+                </>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
