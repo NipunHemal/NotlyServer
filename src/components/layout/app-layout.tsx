@@ -14,12 +14,16 @@ import { CreateNoteModal } from '@/components/modals/create-note-modal';
 import { CreateGroupModal } from '@/components/modals/create-group-modal';
 import { GlobalSearch } from '@/components/search/global-search';
 import { useLogout } from '@/service/query/useAuth';
+import { useMe } from '@/service/query/useUser';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { sidebarOpen, setCreateNoteModalOpen, setSearchOpen, user } = useStore();
+  const { sidebarOpen, setCreateNoteModalOpen, setSearchOpen, user, isAuthenticated } = useStore();
   const logoutMutation = useLogout();
+  
+  // Keep profile in sync if authenticated
+  useMe();
 
   const menuItems = [
     { icon: Home, label: 'Home', href: '/dashboard' },
@@ -103,9 +107,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
               <DropdownMenuContent className="w-64 rounded-2xl p-2 bg-popover/95 backdrop-blur-xl border-white/5 shadow-2xl" side="right" align="end" sideOffset={10}>
                 <DropdownMenuLabel className="px-3 py-2 text-xs font-bold text-muted-foreground uppercase tracking-widest">Account</DropdownMenuLabel>
                 <DropdownMenuSeparator className="bg-white/5" />
-                <DropdownMenuItem className="rounded-xl h-10 focus:bg-white/5 cursor-pointer gap-3">
-                  <Settings className="w-4 h-4" />
-                  <span>Profile Settings</span>
+                <DropdownMenuItem asChild className="rounded-xl h-10 focus:bg-white/5 cursor-pointer gap-3">
+                  <Link href="/settings">
+                    <Settings className="w-4 h-4" />
+                    <span>Profile Settings</span>
+                  </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem className="rounded-xl h-10 focus:bg-white/5 cursor-pointer gap-3">
                   <Bell className="w-4 h-4" />
