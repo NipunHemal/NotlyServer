@@ -27,6 +27,9 @@ public class JwtUtil {
     @Value("${jwt.refresh-token-expiry:604800000}") // 7 days
     private long refreshTokenExpiry;
 
+    @Value("${jwt.unlock-token-expiry:7200000}") // 2 hours
+    private long unlockTokenExpiry;
+
     private SecretKey getSigningKey() {
         byte[] keyBytes = Decoders.BASE64.decode(jwtSecret);
         return Keys.hmacShaKeyFor(keyBytes);
@@ -82,6 +85,32 @@ public class JwtUtil {
 
     public boolean isRefreshTokenValid(String token) {
         return isTokenValid(token) && isRefreshToken(token);
+    }
+
+    // ── Unlock Token Methods ────────────────────────────────────
+
+    public String generateUnlockToken(String userId, String entityType, String entityId) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("type", "UNLOCK");
+        claims.put("ent", entityType);
+        claims.put("eid", entityId);
+
+        return buildToken(claims, userId, unlockTokenExpiry);
+    }
+
+    public boolean isUnlockTokenValid(String token, String userId, String entityType, String entityId) {
+        try {
+            Jws<Claims> jws = parseToken(token);
+            Claims body = jws.getBody();
+            boolean typeMatch = "UNLOCK".equals(body.get("type", String.class));
+            boolean entMatch = entityType.equals(body.get("ent", String.class));
+            boolean eidMatch = entityId.equals(body.get("eid", String.class));
+            boolean subMatch = userId.equals(body.getSubject());
+            return typeMatch && entMatch && eidMatch && subMatch;
+        } catch (JwtException | IllegalArgumentException e) {
+            log.warn("Invalid unlock token: {}", e.getMessage());
+            return false;
+        }
     }
 
     // ── Extraction Methods ──────────────────────────────────────

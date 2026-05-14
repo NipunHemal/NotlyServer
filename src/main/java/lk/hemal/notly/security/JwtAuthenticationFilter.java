@@ -71,6 +71,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 || path.startsWith("/oauth2/")
                 || path.startsWith("/login/oauth2/")
                 || path.startsWith("/api/v1/notes/public/")
+                || path.startsWith("/api/v1/groups/public/")
                 || path.equals("/actuator/health");
     }
 }

@@ -47,6 +47,7 @@ public class SecurityConfig {
                                         "/oauth2/**",
                                         "/login/oauth2/**",
                                         ApiConfig.API_BASE_PATH + "/notes/public/**",
+                                        ApiConfig.API_BASE_PATH + "/groups/public/**",
                                         "/actuator/health"
                                 ).permitAll()
 
@@ -56,13 +57,17 @@ public class SecurityConfig {
                                         "/swagger-ui/**",
                                         "/v3/api-docs/**"
                                 ).permitAll()
-//                        .requestMatchers(
-//                                ApiConfig.API_BASE_PATH +"/auth/**", "/oauth2/**", "/login/oauth2/**",
-//                                ApiConfig.API_BASE_PATH+"/notes/public/**", "/actuator/health",
-//                                "/swagger-ui/**", "/v3/api-docs/**"
-//                        ).permitAll()
+
+                                // Authenticated app endpoints
+                                .requestMatchers(
+                                        ApiConfig.API_BASE_PATH + "/groups/**",
+                                        ApiConfig.API_BASE_PATH + "/notes/**",
+                                        ApiConfig.API_BASE_PATH + "/workspaces/**",
+                                        ApiConfig.API_BASE_PATH + "/bin/**",
+                                        ApiConfig.API_BASE_PATH + "/favorites/**"
+                                ).authenticated()
+
                                 .requestMatchers(ApiConfig.API_BASE_PATH + "/admin/**").hasAuthority("ADMIN")
-                                .requestMatchers(ApiConfig.API_BASE_PATH + "/notes/**").hasAuthority("USER")
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                                 .anyRequest().authenticated()
