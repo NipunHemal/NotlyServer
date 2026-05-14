@@ -22,7 +22,7 @@ public class ApiConfig {
     };
 
     private final String[] allowedHeaders = {
-            "Authorization", "Origin", "Content-Type", "Accept", "X-Requested-With"
+            "Authorization", "Origin", "Content-Type", "Accept", "X-Requested-With", "X-Unlock-Token"
     };
 
 }
