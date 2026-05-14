@@ -64,7 +64,8 @@ public class SecurityConfig {
                                         ApiConfig.API_BASE_PATH + "/notes/**",
                                         ApiConfig.API_BASE_PATH + "/workspaces/**",
                                         ApiConfig.API_BASE_PATH + "/bin/**",
-                                        ApiConfig.API_BASE_PATH + "/favorites/**"
+                                        ApiConfig.API_BASE_PATH + "/favorites/**",
+                                        ApiConfig.API_BASE_PATH + "/users/**"
                                 ).authenticated()
 
                                 .requestMatchers(ApiConfig.API_BASE_PATH + "/admin/**").hasAuthority("ADMIN")
@@ -96,10 +97,10 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(List.of(apiConfig.getAllowedOrigins()));
+        config.setAllowedOrigins(List.of(apiConfig.getAllowedOrigins()));
         config.setAllowedMethods(List.of(apiConfig.getAllowedMethods()));
         config.setAllowedHeaders(List.of(apiConfig.getAllowedHeaders()));
-        config.setExposedHeaders(List.of("Authorization"));
+        config.setExposedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(apiConfig.isAllowedCredentials());
         config.setMaxAge(3600L);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
