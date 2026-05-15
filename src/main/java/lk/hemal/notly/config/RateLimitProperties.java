@@ -3,7 +3,6 @@ package lk.hemal.notly.config;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
 import java.util.List;
@@ -12,7 +11,6 @@ import java.util.List;
  * Rate limiting configuration properties.
  * Defines per-tier token bucket limits for different endpoint categories.
  */
-@Configuration
 @ConfigurationProperties(prefix = "rate-limit")
 @Getter
 @Setter
