@@ -89,7 +89,7 @@ public class GroupServiceImpl implements GroupService {
 
         activityLogService.log(user.getId(), lk.hemal.notly.entity.ActivityLog.EntityType.GROUP,
                 group.getId(), lk.hemal.notly.entity.ActivityLog.ActivityAction.CREATED,
-                Map.of("name", group.getName(), "parent_id", parent != null ? parent.getId() : null));
+                Map.of("name", group.getName(), "parent_id", parent != null ? parent.getId() : "Root"));
 
         log.info("[GROUP] Created id={} name={} user={}", group.getId(), group.getName(), user.getId());
         return groupMapper.toResponse(group);
