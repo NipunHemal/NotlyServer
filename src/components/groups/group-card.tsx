@@ -44,18 +44,18 @@ export function GroupCard({ group }: GroupCardProps) {
       whileHover={{ y: -4 }}
       className="glass-panel rounded-[2rem] p-6 flex flex-col h-full group/card relative overflow-hidden cursor-pointer border-white/5 hover:border-primary/20 transition-all"
     >
-      <Link href={`/groups/${group.id}`} className="absolute inset-0 z-0" />
+      <Link href={`/groups/${group.id}`} className="absolute inset-0 z-10" />
       
-      <div className="relative z-10 flex flex-col h-full">
+      <div className="relative z-0 flex flex-col h-full">
         <div className="flex justify-between items-start mb-6">
           <div className="w-14 h-14 rounded-2xl bg-white/[0.03] flex items-center justify-center border border-white/10 text-primary group-hover/card:bg-primary/10 group-hover/card:scale-110 transition-all">
             <Folder className="w-7 h-7" />
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 relative z-20">
             {group.is_locked && <Lock className="w-4 h-4 text-muted-foreground/30 mr-1" />}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="w-9 h-9 rounded-full opacity-0 group-hover/card:opacity-100 transition-opacity z-20 hover:bg-white/5">
+                <Button variant="ghost" size="icon" className="w-9 h-9 rounded-full opacity-0 group-hover/card:opacity-100 transition-opacity hover:bg-white/5">
                   <MoreVertical className="w-4 h-4" />
                 </Button>
               </DropdownMenuTrigger>
