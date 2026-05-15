@@ -58,7 +58,14 @@ export function GroupHeader({ group }: GroupHeaderProps) {
               <div className="w-6 h-6 rounded-lg bg-white/[0.03] flex items-center justify-center border border-white/5">
                 <Clock className="w-3 h-3" />
               </div>
-              Created {format(new Date(group.created_at), 'MMM dd, yyyy')}
+              Created {(() => {
+                try {
+                  const date = new Date(group.created_at);
+                  return isNaN(date.getTime()) ? 'Recently' : format(date, 'MMM dd, yyyy');
+                } catch {
+                  return 'Recently';
+                }
+              })()}
             </div>
 
             {collaborators && collaborators.length > 0 && (

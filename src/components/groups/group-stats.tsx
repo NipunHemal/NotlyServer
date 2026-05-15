@@ -28,7 +28,15 @@ export function GroupStats({ stats }: GroupStatsProps) {
     },
     { 
       label: 'Last Interaction', 
-      value: stats?.last_activity_at ? formatDistanceToNow(new Date(stats.last_activity_at), { addSuffix: true }) : 'Never', 
+      value: (() => {
+        if (!stats?.last_activity_at) return 'Never';
+        try {
+          const date = new Date(stats.last_activity_at);
+          return isNaN(date.getTime()) ? 'Recently' : formatDistanceToNow(date, { addSuffix: true });
+        } catch {
+          return 'Recently';
+        }
+      })(), 
       icon: Clock, 
       color: 'text-emerald-400',
       description: 'Latest modification'

@@ -93,7 +93,15 @@ export function GroupCard({ group }: GroupCardProps) {
             </span>
             <span className="flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5" />
-              {isFullGroup(group) ? formatDistanceToNow(new Date(group.updated_at), { addSuffix: true }) : 'Recently'}
+              {(() => {
+                if (!isFullGroup(group) || !group.updated_at) return 'Recently';
+                try {
+                  const date = new Date(group.updated_at);
+                  return isNaN(date.getTime()) ? 'Recently' : formatDistanceToNow(date, { addSuffix: true });
+                } catch {
+                  return 'Recently';
+                }
+              })()}
             </span>
           </div>
           
