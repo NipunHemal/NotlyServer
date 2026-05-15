@@ -1,6 +1,6 @@
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { login, register, logout, LoginCredentials, RegisterCredentials } from '../functions/auth.service';
+import { login, register, logout, googleLogin, LoginCredentials, RegisterCredentials } from '../functions/auth.service';
 import { useStore } from '@/store/use-store';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
@@ -24,7 +24,7 @@ export const useLogin = () => {
       toast({
         variant: 'destructive',
         title: 'Login Failed',
-        description: error.message || 'Invalid email or password',
+        description: error.response?.data?.message || error.message || 'Invalid email or password',
       });
     },
   });
@@ -49,8 +49,35 @@ export const useRegister = () => {
       toast({
         variant: 'destructive',
         title: 'Registration Failed',
-        description: error.message || 'Could not create account. Please try again.',
+        description: error.response?.data?.message || error.message || 'Could not create account. Please try again.',
       });
+    },
+  });
+};
+
+export const useGoogleLogin = () => {
+  const setAuth = useStore((state) => state.setAuth);
+  const { toast } = useToast();
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: ({ code, redirectUri }: { code: string; redirectUri: string }) => 
+      googleLogin(code, redirectUri),
+    onSuccess: (data) => {
+      setAuth(data.user, data.accessToken, data.refreshToken);
+      toast({
+        title: 'Signed in with Google',
+        description: `Welcome, ${data.user.displayName}`,
+      });
+      router.push('/dashboard');
+    },
+    onError: (error: any) => {
+      toast({
+        variant: 'destructive',
+        title: 'Google Auth Failed',
+        description: error.response?.data?.message || 'Failed to authenticate with Google',
+      });
+      router.push('/login');
     },
   });
 };

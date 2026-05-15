@@ -40,3 +40,8 @@ export const refresh = async (refreshToken: string): Promise<AuthResponse> => {
   const response = await axiosClient.post(API_ENDPOINTS.AUTH.REFRESH, { refreshToken });
   return response.data;
 };
+
+export const googleLogin = async (code: string, redirectUri: string): Promise<AuthResponse> => {
+  const response = await axiosClient.post(API_ENDPOINTS.AUTH.GOOGLE_LOGIN, { code, redirectUri });
+  return response.data;
+};

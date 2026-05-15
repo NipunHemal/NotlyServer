@@ -12,6 +12,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useRegister } from '@/service/query/useAuth';
+import { initiateGoogleLogin } from '@/lib/oauth';
 
 const signupSchema = z.object({
   display_name: z.string().min(1, 'Full name is required'),
@@ -60,7 +61,12 @@ export default function SignupPage() {
 
         <div className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
-            <Button variant="outline" className="rounded-xl border-white/10 hover:bg-white/5 gap-2" disabled={isPending}>
+            <Button 
+              variant="outline" 
+              className="rounded-xl border-white/10 hover:bg-white/5 gap-2" 
+              disabled={isPending}
+              onClick={initiateGoogleLogin}
+            >
               <Chrome className="w-4 h-4" /> Google
             </Button>
             <Button variant="outline" className="rounded-xl border-white/10 hover:bg-white/5 gap-2" disabled={isPending}>
