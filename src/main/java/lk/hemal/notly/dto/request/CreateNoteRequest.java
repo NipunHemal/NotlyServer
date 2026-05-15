@@ -25,6 +25,10 @@ public class CreateNoteRequest {
     @Schema(description = "Note title (defaults to 'Untitled')", example = "Meeting Notes")
     private String title;
 
-    @Schema(description = "Note content (Tiptap JSON or plain text)", example = "{\"type\":\"doc\",\"content\":[]}")
+    @Schema(description = "Plain text content (backward compat)", example = "Hello world")
     private String content;
+
+    @JsonProperty("content_json")
+    @Schema(description = "Rich editor content as Tiptap JSON", example = "{\"type\":\"doc\",\"content\":[]}")
+    private String contentJson;
 }

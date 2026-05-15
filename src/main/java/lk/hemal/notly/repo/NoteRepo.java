@@ -38,4 +38,7 @@ public interface NoteRepo extends JpaRepository<Note, UUID> {
     @Modifying
     @Query(value = "DELETE FROM notes WHERE id = ?1", nativeQuery = true)
     void hardDelete(UUID id);
+
+    @Query("SELECT n.contentHash FROM Note n WHERE n.id = ?1")
+    Optional<String> findContentHashById(UUID id);
 }

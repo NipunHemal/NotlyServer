@@ -11,9 +11,11 @@ import lk.hemal.notly.config.ApiConfig;
 import lk.hemal.notly.dto.request.CopyNoteRequest;
 import lk.hemal.notly.dto.request.CreateNoteRequest;
 import lk.hemal.notly.dto.request.MoveNoteRequest;
+import lk.hemal.notly.dto.request.NoteAutosaveRequest;
 import lk.hemal.notly.dto.request.UpdateNoteRequest;
 import lk.hemal.notly.dto.response.NoteResponse;
 import lk.hemal.notly.dto.response.NoteSummaryResponse;
+import lk.hemal.notly.dto.response.NoteVersionResponse;
 import lk.hemal.notly.dto.response.PublicNoteResponse;
 import lk.hemal.notly.dto.response.ShareLinkResponse;
 import lk.hemal.notly.entity.Note;
@@ -21,6 +23,10 @@ import lk.hemal.notly.entity.User;
 import lk.hemal.notly.exception.ErrorResponse;
 import lk.hemal.notly.service.NoteService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -138,6 +144,76 @@ public class NoteController {
             @Valid @RequestBody UpdateNoteRequest req,
             @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(noteService.updateNote(id, req, user));
+    }
+
+    @Operation(
+            summary = "Autosave note",
+            description = "Efficient autosave for editor content. Creates a snapshot only if content changed. Supports optimistic concurrency via clientVersion."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Note autosaved successfully",
+                    content = @Content(schema = @Schema(implementation = NoteResponse.class))),
+            @ApiResponse(responseCode = "200", description = "Autosave skipped (no change)",
+                    content = @Content(schema = @Schema(implementation = NoteResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Validation failed",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Note is locked",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Note not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Concurrent modification detected",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PatchMapping("/{id}/autosave")
+    public ResponseEntity<NoteResponse> autosaveNote(
+            @PathVariable UUID id,
+            @Valid @RequestBody NoteAutosaveRequest req,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(noteService.autosaveNote(id, req, user));
+    }
+
+    @Operation(
+            summary = "Get note version history",
+            description = "Returns paginated snapshot history for a note."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Version history retrieved",
+                    content = @Content(schema = @Schema(implementation = NoteVersionResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Note not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @GetMapping("/{id}/versions")
+    public ResponseEntity<Page<NoteVersionResponse>> getNoteVersions(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal User user,
+            @PageableDefault(size = 20, sort = "versionNumber", direction = Sort.Direction.DESC) Pageable pageable) {
+        return ResponseEntity.ok(noteService.getNoteVersions(id, user, pageable));
+    }
+
+    @Operation(
+            summary = "Restore note version",
+            description = "Restores a note to a previous snapshot. Current state is saved as a snapshot before restore."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Version restored successfully",
+                    content = @Content(schema = @Schema(implementation = NoteResponse.class))),
+            @ApiResponse(responseCode = "400", description = "Version does not belong to this note",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Unauthorized",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Note or version not found",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PostMapping("/{id}/versions/{versionId}/restore")
+    public ResponseEntity<NoteResponse> restoreNoteVersion(
+            @PathVariable UUID id,
+            @PathVariable UUID versionId,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(noteService.restoreNoteVersion(id, versionId, user));
     }
 
     @Operation(

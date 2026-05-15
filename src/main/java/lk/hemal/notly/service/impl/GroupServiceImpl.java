@@ -710,7 +710,7 @@ public class GroupServiceImpl implements GroupService {
     @Override
     @Transactional
     public GroupCollaboratorResponse updateCollaboratorRole(UUID groupId, UUID userId, UpdateCollaboratorRoleRequest req, User user) {
-        requireOwnedGroup(groupId, user);
+        Group group = requireOwnedGroup(groupId, user);
 
         GroupCollaborator collaborator = groupCollaboratorRepo.findByGroupIdAndUserId(groupId, userId)
                 .orElseThrow(() -> new NotlyException(ErrorCode.COLLABORATOR_NOT_FOUND));

@@ -5,16 +5,20 @@ import lk.hemal.notly.dto.request.CopyNoteRequest;
 import lk.hemal.notly.dto.request.CreateNoteRequest;
 import lk.hemal.notly.dto.request.LockRequest;
 import lk.hemal.notly.dto.request.MoveNoteRequest;
+import lk.hemal.notly.dto.request.NoteAutosaveRequest;
 import lk.hemal.notly.dto.request.UnlockRequest;
 import lk.hemal.notly.dto.request.UpdateNoteRequest;
 import lk.hemal.notly.dto.response.NoteResponse;
 import lk.hemal.notly.dto.response.NoteSummaryResponse;
+import lk.hemal.notly.dto.response.NoteVersionResponse;
 import lk.hemal.notly.dto.response.PublicGroupResponse;
 import lk.hemal.notly.dto.response.PublicNoteResponse;
 import lk.hemal.notly.dto.response.ShareLinkResponse;
 import lk.hemal.notly.dto.response.UnlockTokenResponse;
 import lk.hemal.notly.entity.Note;
 import lk.hemal.notly.entity.User;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.UUID;
@@ -32,6 +36,12 @@ public interface NoteService {
     List<NoteSummaryResponse> getNotesByFavorite(User user);
 
     NoteResponse updateNote(UUID noteId, UpdateNoteRequest req, User user);
+
+    NoteResponse autosaveNote(UUID noteId, NoteAutosaveRequest req, User user);
+
+    Page<NoteVersionResponse> getNoteVersions(UUID noteId, User user, Pageable pageable);
+
+    NoteResponse restoreNoteVersion(UUID noteId, UUID versionId, User user);
 
     NoteResponse moveNote(UUID noteId, MoveNoteRequest req, User user);
 

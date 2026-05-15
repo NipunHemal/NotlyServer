@@ -5,10 +5,12 @@ import lk.hemal.notly.dto.request.CopyNoteRequest;
 import lk.hemal.notly.dto.request.CreateNoteRequest;
 import lk.hemal.notly.dto.request.LockRequest;
 import lk.hemal.notly.dto.request.MoveNoteRequest;
+import lk.hemal.notly.dto.request.NoteAutosaveRequest;
 import lk.hemal.notly.dto.request.UnlockRequest;
 import lk.hemal.notly.dto.request.UpdateNoteRequest;
 import lk.hemal.notly.dto.response.NoteResponse;
 import lk.hemal.notly.dto.response.NoteSummaryResponse;
+import lk.hemal.notly.dto.response.NoteVersionResponse;
 import lk.hemal.notly.dto.response.PublicGroupResponse;
 import lk.hemal.notly.dto.response.PublicNoteResponse;
 import lk.hemal.notly.dto.response.ShareLinkResponse;
@@ -16,6 +18,7 @@ import lk.hemal.notly.dto.response.UnlockTokenResponse;
 import lk.hemal.notly.entity.BinItem;
 import lk.hemal.notly.entity.Group;
 import lk.hemal.notly.entity.Note;
+import lk.hemal.notly.entity.NoteVersion;
 import lk.hemal.notly.entity.User;
 import lk.hemal.notly.exception.ErrorCode;
 import lk.hemal.notly.exception.NotlyException;
@@ -23,12 +26,16 @@ import lk.hemal.notly.mapper.NoteMapper;
 import lk.hemal.notly.repo.BinItemRepo;
 import lk.hemal.notly.repo.GroupRepo;
 import lk.hemal.notly.repo.NoteRepo;
+import lk.hemal.notly.repo.NoteVersionRepo;
 import lk.hemal.notly.service.ActivityLogService;
 import lk.hemal.notly.service.LockAttemptService;
 import lk.hemal.notly.service.NoteService;
+import lk.hemal.notly.util.ContentHashUtil;
 import lk.hemal.notly.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +53,7 @@ public class NoteServiceImpl implements NoteService {
     private final NoteRepo noteRepo;
     private final GroupRepo groupRepo;
     private final BinItemRepo binItemRepo;
+    private final NoteVersionRepo noteVersionRepo;
     private final NoteMapper noteMapper;
     private final JwtUtil jwtUtil;
     private final ActivityLogService activityLogService;
@@ -67,7 +75,16 @@ public class NoteServiceImpl implements NoteService {
         note.setGroup(group);
         note.setOwner(user);
         note.setTitle(req.getTitle() != null && !req.getTitle().isBlank() ? req.getTitle() : "Untitled");
+
+        // Handle content initialization
+        String contentJson = req.getContentJson() != null && !req.getContentJson().isBlank()
+                ? req.getContentJson()
+                : "{\"type\":\"doc\",\"content\":[]}";
+        note.setContentJson(contentJson);
         note.setContent(req.getContent() != null ? req.getContent() : "");
+        note.setContentHash(ContentHashUtil.hash(contentJson));
+        note.setVersionNumber(1L);
+
         note.setStatus(Note.NoteStatus.ACTIVE);
         note.setVisibility(Note.Visibility.PRIVATE);
         note.setSortOrder(noteRepo.maxSortOrderInGroup(req.getGroupId()) + 1);
@@ -157,6 +174,115 @@ public class NoteServiceImpl implements NoteService {
 
         log.info("[NOTE] Updated id={} title={}", note.getId(), note.getTitle());
         return noteMapper.toResponse(note);
+    }
+
+    @Override
+    @Transactional
+    public NoteResponse autosaveNote(UUID noteId, NoteAutosaveRequest req, User user) {
+        Note note = requireOwnedNote(noteId, user);
+
+        if (note.isLocked() || isGroupOrAncestorLocked(note.getGroup(), null, user)) {
+            throw new NotlyException(ErrorCode.ITEM_LOCKED, "This note is locked. Unlock it first.");
+        }
+
+        // Optimistic concurrency check
+        if (req.getClientVersion() != null && !req.getClientVersion().equals(note.getLockVersion())) {
+            throw new NotlyException(ErrorCode.CONCURRENT_MODIFICATION,
+                    "Note was modified by another session. Please refresh and try again.");
+        }
+
+        String newHash = ContentHashUtil.hash(req.getContentJson());
+
+        // Deduplication: skip if content hasn't changed
+        if (ContentHashUtil.isSameContent(newHash, note.getContentHash())) {
+            log.info("[NOTE] Autosave skipped (no change) id={} hash={}", noteId, newHash);
+            return noteMapper.toResponse(note);
+        }
+
+        // Save snapshot BEFORE updating current state
+        createVersionSnapshot(note, user, "autosave");
+
+        // Update current state
+        if (req.getTitle() != null) {
+            note.setTitle(req.getTitle());
+        }
+        note.setContentJson(req.getContentJson());
+        note.setContentHash(newHash);
+        note.setVersionNumber(note.getVersionNumber() + 1);
+        note.setLastAutosaveAt(java.time.LocalDateTime.now());
+
+        note = noteRepo.save(note);
+
+        log.info("[NOTE] Autosaved id={} version={} hash={}", note.getId(), note.getVersionNumber(), newHash);
+        return noteMapper.toResponse(note);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<NoteVersionResponse> getNoteVersions(UUID noteId, User user, Pageable pageable) {
+        requireOwnedNote(noteId, user);
+        return noteVersionRepo.findByNoteIdOrderByVersionNumberDesc(noteId, pageable)
+                .map(this::toVersionResponse);
+    }
+
+    @Override
+    @Transactional
+    public NoteResponse restoreNoteVersion(UUID noteId, UUID versionId, User user) {
+        Note note = requireOwnedNote(noteId, user);
+        NoteVersion version = noteVersionRepo.findById(versionId)
+                .orElseThrow(() -> new NotlyException(ErrorCode.NOT_FOUND, "Version not found"));
+
+        if (!version.getNote().getId().equals(noteId)) {
+            throw new NotlyException(ErrorCode.BAD_REQUEST, "Version does not belong to this note");
+        }
+
+        // Save current state as a snapshot before restoring
+        createVersionSnapshot(note, user, "restore-pre");
+
+        // Restore from version
+        note.setTitle(version.getTitle());
+        note.setContentJson(version.getContentJson());
+        note.setContentHash(version.getContentHash());
+        note.setVersionNumber(note.getVersionNumber() + 1);
+
+        note = noteRepo.save(note);
+
+        // Save restore marker snapshot
+        createVersionSnapshot(note, user, "restore-from-v" + version.getVersionNumber());
+
+        log.info("[NOTE] Restored version id={} from_version={} user={}",
+                noteId, version.getVersionNumber(), user.getId());
+        return noteMapper.toResponse(note);
+    }
+
+    private void createVersionSnapshot(Note note, User user, String changeSummary) {
+        NoteVersion snapshot = NoteVersion.builder()
+                .note(note)
+                .versionNumber(note.getVersionNumber())
+                .title(note.getTitle())
+                .contentJson(note.getContentJson())
+                .contentHash(note.getContentHash())
+                .createdBy(user)
+                .changeSummary(changeSummary)
+                .build();
+        noteVersionRepo.save(snapshot);
+    }
+
+    private NoteVersionResponse toVersionResponse(NoteVersion v) {
+        return NoteVersionResponse.builder()
+                .id(v.getId())
+                .versionNumber(v.getVersionNumber())
+                .title(v.getTitle())
+                .contentJson(v.getContentJson())
+                .contentHash(v.getContentHash())
+                .changeSummary(v.getChangeSummary())
+                .createdAt(v.getCreatedAt())
+                .createdBy(v.getCreatedBy() != null ? NoteVersionResponse.VersionUser.builder()
+                        .id(v.getCreatedBy().getId())
+                        .username(v.getCreatedBy().getUsername())
+                        .displayName(v.getCreatedBy().getDisplayName())
+                        .build() : null)
+                .build();
     }
 
     @Override

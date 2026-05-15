@@ -38,6 +38,22 @@ public class NoteResponse {
     @Schema(description = "Note content (Tiptap JSON or plain text)", example = "{\"type\":\"doc\",\"content\":[]}")
     private String content;
 
+    @JsonProperty("content_json")
+    @Schema(description = "Rich editor content (JSONB)", example = "{\"type\":\"doc\",\"content\":[]}")
+    private String contentJson;
+
+    @JsonProperty("version_number")
+    @Schema(description = "Current version number", example = "5")
+    private Long versionNumber;
+
+    @JsonProperty("content_hash")
+    @Schema(description = "Content SHA-256 hash", example = "a3f5c2...")
+    private String contentHash;
+
+    @JsonProperty("last_autosave_at")
+    @Schema(description = "Last autosave timestamp", example = "2024-01-15T10:30:00")
+    private LocalDateTime lastAutosaveAt;
+
     @Schema(description = "Note status", example = "ACTIVE")
     private String status;
 

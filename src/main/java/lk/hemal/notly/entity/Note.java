@@ -2,8 +2,10 @@ package lk.hemal.notly.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -36,6 +38,23 @@ public class Note extends BaseEntity {
 
     @Column(name = "content", columnDefinition = "TEXT")
     private String content;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "content_json")
+    private String contentJson;
+
+    @Column(name = "version_number", nullable = false)
+    private Long versionNumber = 1L;
+
+    @Column(name = "content_hash", length = 64)
+    private String contentHash;
+
+    @Version
+    @Column(name = "lock_version", nullable = false)
+    private Long lockVersion = 0L;
+
+    @Column(name = "last_autosave_at")
+    private LocalDateTime lastAutosaveAt;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)

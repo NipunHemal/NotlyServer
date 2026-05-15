@@ -25,6 +25,7 @@ public enum ErrorCode {
     FORBIDDEN("AUTH_005", HttpStatus.FORBIDDEN, "Access denied"),
 
     // Resource Errors
+    NOT_FOUND("RES_000", HttpStatus.NOT_FOUND, "Resource not found"),
     RESOURCE_NOT_FOUND("RES_001", HttpStatus.NOT_FOUND, "Resource not found"),
     EMAIL_ALREADY_EXISTS("RES_002", HttpStatus.CONFLICT, "Email is already registered"),
     USERNAME_ALREADY_EXISTS("RES_003", HttpStatus.CONFLICT, "Username is already taken"),
@@ -38,6 +39,9 @@ public enum ErrorCode {
     NOTE_NOT_FOUND("NOTE_001", HttpStatus.NOT_FOUND, "Note not found"),
     CIRCULAR_GROUP_REFERENCE("GRP_002", HttpStatus.BAD_REQUEST, "Cannot move a group into itself or one of its descendants"),
     ROOT_GROUP_PROTECTED("GRP_003", HttpStatus.BAD_REQUEST, "The root group cannot be moved, deleted, or archived"),
+
+    // Concurrency
+    CONCURRENT_MODIFICATION("CON_001", HttpStatus.CONFLICT, "Concurrent modification detected. Please refresh and try again"),
 
     // Lock / secure
     INVALID_LOCK_PASSWORD("LOCK_001", HttpStatus.UNAUTHORIZED, "Incorrect password"),

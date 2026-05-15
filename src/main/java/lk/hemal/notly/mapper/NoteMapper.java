@@ -20,6 +20,10 @@ public interface NoteMapper {
     @Mapping(target = "favorite", source = "favorite")
     @Mapping(target = "status", source = "status")
     @Mapping(target = "visibility", source = "visibility")
+    @Mapping(target = "contentJson", source = "contentJson")
+    @Mapping(target = "versionNumber", source = "versionNumber")
+    @Mapping(target = "contentHash", source = "contentHash")
+    @Mapping(target = "lastAutosaveAt", source = "lastAutosaveAt")
     NoteResponse toResponse(Note note);
 
     @Mapping(target = "groupId", source = "group.id")
