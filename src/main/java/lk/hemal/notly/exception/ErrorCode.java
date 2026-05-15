@@ -62,6 +62,9 @@ public enum ErrorCode {
     BIN_ITEM_NOT_FOUND("BIN_001", HttpStatus.NOT_FOUND, "Item not found in bin"),
     BIN_RESTORE_EXPIRED("BIN_002", HttpStatus.GONE, "This item's 30-day restore window has expired"),
 
+    // Rate Limiting
+    RATE_LIMIT_EXCEEDED("RAT_001", HttpStatus.TOO_MANY_REQUESTS, "Rate limit exceeded. Please try again later"),
+
     // Internal Errors
     INTERNAL_SERVER_ERROR("INT_001", HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
 
