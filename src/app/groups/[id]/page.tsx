@@ -1,9 +1,8 @@
 
 "use client";
 
-import React, { use } from 'react';
+import React, { use, useState } from 'react';
 import { AppLayout } from '@/components/layout/app-layout';
-import { useStore } from '@/store/use-store';
 import { GroupTreeSidebar } from '@/components/groups/group-tree-sidebar';
 import { GroupHeader } from '@/components/groups/group-header';
 import { GroupStats } from '@/components/groups/group-stats';
@@ -12,24 +11,36 @@ import { DocCard } from '@/components/documents/doc-card';
 import { BreadcrumbNavigation } from '@/components/groups/breadcrumb-navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Search, Grid, List as ListIcon, Filter, Plus, Lock, Key } from 'lucide-react';
+import { Search, Grid, List as ListIcon, Filter, Plus, Lock, Key, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useGroupById, useGroupChildren, useGroupBreadcrumb, useGroupStats } from '@/service/query/useGroup';
 
 export default function GroupDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const { groups, notes } = useStore();
-  const group = groups.find(g => g.id === id);
-  const subGroups = groups.filter(g => g.parentId === id);
-  const groupNotes = notes.filter(n => n.groupId === id && !n.isDeleted);
-  
+  const [unlockToken, setUnlockToken] = useState<string>("");
   const [view, setView] = React.useState<'grid' | 'list'>('grid');
-  const [isLocked, setIsLocked] = React.useState(group?.isLocked || false);
-  const [unlocked, setUnlocked] = React.useState(!group?.isLocked);
+  
+  const { data: group, isLoading: isGroupLoading } = useGroupById(id);
+  const { data: children, isLoading: isChildrenLoading, error: childrenError } = useGroupChildren(id, unlockToken);
+  const { data: breadcrumbs } = useGroupBreadcrumb(id);
+  const { data: stats } = useGroupStats(id);
+
+  const isLocked = childrenError && (childrenError as any).status === 403;
+
+  if (isGroupLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-[calc(100vh-160px)]">
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   if (!group) return <div>Group not found</div>;
 
-  if (isLocked && !unlocked) {
+  if (isLocked) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-[calc(100vh-160px)]">
@@ -47,9 +58,19 @@ export default function GroupDetailsPage({ params }: { params: Promise<{ id: str
             </div>
             <div className="relative group">
               <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-              <Input type="password" placeholder="Group Password" className="h-12 pl-12 rounded-xl bg-white/[0.03] border-white/10" />
+              <Input 
+                type="password" 
+                placeholder="Group Password" 
+                className="h-12 pl-12 rounded-xl bg-white/[0.03] border-white/10" 
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') setUnlockToken(e.currentTarget.value);
+                }}
+              />
             </div>
-            <Button onClick={() => setUnlocked(true)} className="w-full h-12 rounded-xl text-md font-bold shadow-xl shadow-primary/20">
+            <Button onClick={(e) => {
+              const input = e.currentTarget.previousElementSibling?.querySelector('input');
+              if (input) setUnlockToken(input.value);
+            }} className="w-full h-12 rounded-xl text-md font-bold shadow-xl shadow-primary/20">
               Unlock Group
             </Button>
           </motion.div>
@@ -58,6 +79,9 @@ export default function GroupDetailsPage({ params }: { params: Promise<{ id: str
     );
   }
 
+  const subGroups = children?.groups || [];
+  const groupNotes = children?.notes || [];
+
   return (
     <AppLayout>
       <div className="flex h-[calc(100vh-130px)] -m-8">
@@ -65,11 +89,11 @@ export default function GroupDetailsPage({ params }: { params: Promise<{ id: str
         
         <div className="flex-1 overflow-y-auto p-12 custom-scrollbar">
           <div className="max-w-7xl mx-auto space-y-10">
-            <BreadcrumbNavigation currentGroupId={group.id} />
+            <BreadcrumbNavigation items={breadcrumbs} />
             
             <GroupHeader group={group} />
             
-            <GroupStats group={group} subGroupCount={subGroups.length} />
+            <GroupStats stats={stats} />
 
             <Tabs defaultValue="contents" className="space-y-8">
               <div className="flex items-center justify-between border-b border-white/5">
@@ -130,7 +154,11 @@ export default function GroupDetailsPage({ params }: { params: Promise<{ id: str
                     </div>
                   </div>
                   
-                  {groupNotes.length > 0 ? (
+                  {isChildrenLoading ? (
+                    <div className="flex justify-center py-20">
+                      <Loader2 className="w-8 h-8 animate-spin text-primary/40" />
+                    </div>
+                  ) : groupNotes.length > 0 ? (
                     <div className={view === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-3"}>
                       {groupNotes.map(note => (
                         <DocCard key={note.id} note={note} />

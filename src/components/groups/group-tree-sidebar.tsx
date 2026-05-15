@@ -3,27 +3,29 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Folder, FolderOpen, MoreVertical, Plus, Lock, Users, Star } from 'lucide-react';
-import { Group, useStore } from '@/store/use-store';
+import { ChevronRight, Folder, FolderOpen, MoreVertical, Plus, Lock, Users, Star, Loader2 } from 'lucide-react';
+import { useStore } from '@/store/use-store';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { useGroupTree, useToggleGroupFavorite, useDeleteGroup } from '@/service/query/useGroup';
+import { GroupTreeNode } from '@/service/functions/group.service';
 
 interface GroupTreeItemProps {
-  group: Group;
+  group: GroupTreeNode;
   level: number;
 }
 
 const GroupTreeItem = ({ group, level }: GroupTreeItemProps) => {
   const params = useParams();
   const isActive = params.id === group.id;
-  const { groups } = useStore();
   const [isExpanded, setIsExpanded] = useState(false);
   
-  const subGroups = groups.filter(g => g.parentId === group.id);
-  const hasSubGroups = subGroups.length > 0;
+  const hasSubGroups = group.children && group.children.length > 0;
+  const toggleFavorite = useToggleGroupFavorite();
+  const deleteGroup = useDeleteGroup();
 
   return (
     <div className="space-y-1">
@@ -49,44 +51,57 @@ const GroupTreeItem = ({ group, level }: GroupTreeItemProps) => {
         </button>
 
         <Link href={`/groups/${group.id}`} className="flex-1 flex items-center gap-2 overflow-hidden">
-          {isExpanded ? <FolderOpen className="w-4 h-4 shrink-0" /> : <Folder className="w-4 h-4 shrink-0" />}
+          {isExpanded ? <FolderOpen className="w-4 h-4 shrink-0 text-primary/60" /> : <Folder className="w-4 h-4 shrink-0" />}
           <span className="truncate text-sm">{group.name}</span>
           <div className="flex items-center gap-1 ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-            {group.isLocked && <Lock className="w-3 h-3 text-muted-foreground/50" />}
-            <span className="text-[10px] text-muted-foreground/50 bg-white/[0.05] px-1 rounded">{group.noteCount}</span>
+            {group.is_locked && <Lock className="w-3 h-3 text-muted-foreground/50" />}
+            {group.is_favorite && <Star className="w-3 h-3 text-yellow-500 fill-current" />}
           </div>
         </Link>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity">
+            <Button variant="ghost" size="icon" className="w-6 h-6 opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
               <MoreVertical className="w-3.5 h-3.5" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-48 glass-panel">
-            <DropdownMenuItem className="gap-2"><Plus className="w-4 h-4" /> Create Sub Group</DropdownMenuItem>
-            <DropdownMenuItem className="gap-2">Rename</DropdownMenuItem>
-            <DropdownMenuItem className="gap-2">Move</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2"><Star className="w-4 h-4" /> Add Favorite</DropdownMenuItem>
-            <DropdownMenuItem className="gap-2"><Lock className="w-4 h-4" /> Lock Group</DropdownMenuItem>
-            <DropdownMenuItem className="gap-2"><Users className="w-4 h-4" /> Share</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="gap-2 text-destructive">Archive</DropdownMenuItem>
-            <DropdownMenuItem className="gap-2 text-destructive font-bold">Delete</DropdownMenuItem>
+          <DropdownMenuContent align="start" className="w-48 glass-panel border-white/10 bg-popover/90 backdrop-blur-xl">
+            <DropdownMenuItem className="gap-2 cursor-pointer"><Plus className="w-4 h-4" /> Create Sub Group</DropdownMenuItem>
+            <DropdownMenuItem className="gap-2 cursor-pointer">Rename</DropdownMenuItem>
+            <DropdownMenuItem className="gap-2 cursor-pointer">Move</DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-white/5" />
+            <DropdownMenuItem 
+              className="gap-2 cursor-pointer"
+              onClick={() => toggleFavorite.mutate(group.id)}
+            >
+              <Star className={cn("w-4 h-4", group.is_favorite && "fill-current text-yellow-500")} /> 
+              {group.is_favorite ? 'Remove Favorite' : 'Add Favorite'}
+            </DropdownMenuItem>
+            <DropdownMenuItem className="gap-2 cursor-pointer"><Lock className="w-4 h-4" /> Lock Group</DropdownMenuItem>
+            <DropdownMenuItem className="gap-2 cursor-pointer"><Users className="w-4 h-4" /> Share</DropdownMenuItem>
+            <DropdownMenuSeparator className="bg-white/5" />
+            <DropdownMenuItem className="gap-2 text-destructive cursor-pointer">Archive</DropdownMenuItem>
+            <DropdownMenuItem 
+              className="gap-2 text-destructive font-bold cursor-pointer"
+              onClick={() => {
+                if(confirm(`Are you sure you want to delete "${group.name}"?`)) deleteGroup.mutate(group.id);
+              }}
+            >
+              Delete
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
       <AnimatePresence>
-        {isExpanded && (
+        {isExpanded && hasSubGroups && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             className="overflow-hidden"
           >
-            {subGroups.map(sub => (
+            {group.children.map(sub => (
               <GroupTreeItem key={sub.id} group={sub} level={level + 1} />
             ))}
           </motion.div>
@@ -97,21 +112,36 @@ const GroupTreeItem = ({ group, level }: GroupTreeItemProps) => {
 };
 
 export function GroupTreeSidebar() {
-  const { groups } = useStore();
-  const rootGroups = groups.filter(g => !g.parentId);
+  const { user, setCreateGroupModalOpen } = useStore();
+  const { data: groupTree, isLoading } = useGroupTree(user?.id);
 
   return (
     <div className="w-64 flex flex-col h-full border-r border-white/5 bg-white/[0.01] overflow-hidden">
-      <div className="p-4 flex items-center justify-between">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Hierarchy</h3>
-        <Button variant="ghost" size="icon" className="w-7 h-7 rounded-lg hover:bg-white/5">
-          <Plus className="w-4 h-4 text-primary" />
+      <div className="p-5 flex items-center justify-between">
+        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground/50">Hierarchy</h3>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="w-7 h-7 rounded-lg hover:bg-white/5 text-primary"
+          onClick={() => setCreateGroupModalOpen(true)}
+        >
+          <Plus className="w-4 h-4" />
         </Button>
       </div>
       <div className="flex-1 overflow-y-auto px-2 pb-8 custom-scrollbar">
-        {rootGroups.map(group => (
-          <GroupTreeItem key={group.id} group={group} level={0} />
-        ))}
+        {isLoading ? (
+          <div className="flex justify-center py-10">
+            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground/20" />
+          </div>
+        ) : groupTree && groupTree.length > 0 ? (
+          groupTree.map(group => (
+            <GroupTreeItem key={group.id} group={group} level={0} />
+          ))
+        ) : (
+          <div className="px-4 py-8 text-center space-y-2">
+            <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest">No groups yet</p>
+          </div>
+        )}
       </div>
     </div>
   );

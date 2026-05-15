@@ -4,45 +4,37 @@
 import React from 'react';
 import { ChevronRight, Home } from 'lucide-react';
 import Link from 'next/link';
-import { Group, useStore } from '@/store/use-store';
 
-interface BreadcrumbNavigationProps {
-  currentGroupId?: string;
+interface BreadcrumbItem {
+  id: string;
+  name: string;
 }
 
-export function BreadcrumbNavigation({ currentGroupId }: BreadcrumbNavigationProps) {
-  const { groups } = useStore();
+interface BreadcrumbNavigationProps {
+  items?: BreadcrumbItem[];
+}
 
-  const getBreadcrumbs = () => {
-    const crumbs: { name: string; href: string }[] = [];
-    if (!currentGroupId) return crumbs;
-
-    let current = groups.find(g => g.id === currentGroupId);
-    while (current) {
-      const node = current;
-      crumbs.unshift({ name: node.name, href: `/groups/${node.id}` });
-      current = groups.find(g => g.id === node.parentId);
-    }
-    return crumbs;
-  };
-
-  const breadcrumbs = getBreadcrumbs();
-
+export function BreadcrumbNavigation({ items = [] }: BreadcrumbNavigationProps) {
   return (
-    <nav className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
-      <Link href="/dashboard" className="hover:text-foreground transition-colors flex items-center gap-1">
-        <Home className="w-3.5 h-3.5" />
+    <nav className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
+      <Link href="/dashboard" className="hover:text-primary transition-colors flex items-center gap-1.5 group">
+        <div className="p-1 rounded-md group-hover:bg-primary/10 transition-colors">
+          <Home className="w-3 h-3" />
+        </div>
       </Link>
-      <ChevronRight className="w-3.5 h-3.5 opacity-50" />
-      <Link href="/groups" className="hover:text-foreground transition-colors">
-        Groups
+      
+      <ChevronRight className="w-3 h-3 opacity-30" />
+      
+      <Link href="/dashboard" className="hover:text-primary transition-colors">
+        Knowledge Base
       </Link>
-      {breadcrumbs.map((crumb, idx) => (
-        <React.Fragment key={crumb.href}>
-          <ChevronRight className="w-3.5 h-3.5 opacity-50" />
+
+      {items.map((crumb, idx) => (
+        <React.Fragment key={crumb.id}>
+          <ChevronRight className="w-3 h-3 opacity-30" />
           <Link 
-            href={crumb.href} 
-            className={`hover:text-foreground transition-colors ${idx === breadcrumbs.length - 1 ? 'text-foreground font-bold' : ''}`}
+            href={`/groups/${crumb.id}`} 
+            className={`hover:text-primary transition-colors ${idx === items.length - 1 ? 'text-foreground font-black' : ''}`}
           >
             {crumb.name}
           </Link>
