@@ -17,4 +17,6 @@ public interface BinItemRepo extends JpaRepository<BinItem, UUID> {
     List<BinItem> findByRestoreDeadlineBefore(LocalDateTime cutoff);
 
     void deleteByEntityTypeAndEntityId(BinItem.EntityType type, UUID entityId);
+
+    long countByOwnerId(UUID ownerId);
 }

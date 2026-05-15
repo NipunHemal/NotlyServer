@@ -41,4 +41,7 @@ public interface ActivityLogRepo extends JpaRepository<ActivityLog, UUID> {
     /** Get activity summary counts per action for a user. */
     @Query("SELECT a.action, COUNT(a) FROM ActivityLog a WHERE a.user.id = :userId GROUP BY a.action")
     List<Object[]> countByActionForUser(@Param("userId") UUID userId);
+
+    /** Get top N recent activities for a user. */
+    List<ActivityLog> findTop5ByUserIdOrderByCreatedAtDesc(UUID userId);
 }

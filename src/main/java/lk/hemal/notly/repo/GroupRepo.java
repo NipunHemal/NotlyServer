@@ -44,4 +44,8 @@ public interface GroupRepo extends JpaRepository<Group, UUID> {
     @Modifying
     @Query(value = "DELETE FROM groups WHERE id = ?1", nativeQuery = true)
     void hardDelete(UUID id);
+
+    long countByWorkspaceOwnerId(UUID ownerId);
+
+    long countByWorkspaceOwnerIdAndIsFavoriteTrue(UUID ownerId);
 }

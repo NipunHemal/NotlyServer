@@ -12,4 +12,6 @@ public interface WorkspaceRepo extends JpaRepository<Workspace, UUID> {
     Optional<Workspace> findFirstByOwnerIdOrderByCreatedAtAsc(UUID ownerId);
 
     List<Workspace> findByOwnerId(UUID ownerId);
+
+    long countByOwnerId(UUID ownerId);
 }

@@ -41,4 +41,13 @@ public interface NoteRepo extends JpaRepository<Note, UUID> {
 
     @Query("SELECT n.contentHash FROM Note n WHERE n.id = ?1")
     Optional<String> findContentHashById(UUID id);
+
+    long countByOwnerId(UUID ownerId);
+
+    long countByOwnerIdAndIsFavoriteTrue(UUID ownerId);
+
+    long countByOwnerIdAndStatus(UUID ownerId, Note.NoteStatus status);
+
+    @Query("SELECT n FROM Note n WHERE n.owner.id = ?1 ORDER BY n.lastAutosaveAt DESC NULLS LAST, n.createdAt DESC")
+    List<Note> findRecentByOwnerId(UUID ownerId, org.springframework.data.domain.Pageable pageable);
 }
