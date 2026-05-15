@@ -131,21 +131,31 @@ public class GroupServiceImpl implements GroupService {
     @Override
     @Transactional(readOnly = true)
     public List<GroupTreeNode> getGroupTree(User user, UUID workspaceId) {
-        List<Group> allGroups;
-        if (workspaceId != null) {
-            allGroups = groupRepo.findByWorkspaceIdAndParentIsNullOrderBySortOrderAsc(workspaceId);
-        } else {
-            Workspace workspace = workspaceService.getOrCreateDefaultWorkspace(user);
-            allGroups = groupRepo.findByWorkspaceOwnerIdOrderBySortOrderAsc(user.getId());
+        UUID targetWorkspaceId = (workspaceId != null)
+                ? workspaceId
+                : workspaceService.getOrCreateDefaultWorkspace(user).getId();
+
+        List<Group> allGroups = groupRepo.findAllByWorkspaceId(targetWorkspaceId);
+
+        if (allGroups.isEmpty()) {
+            log.info("[GROUP] Tree empty for workspace={}", targetWorkspaceId);
+            return Collections.emptyList();
         }
 
-        Map<UUID, List<Group>> childrenByParent = allGroups.stream()
-                .filter(g -> g.getParent() != null)
-                .collect(Collectors.groupingBy(g -> g.getParent().getId()));
+        Map<UUID, List<Group>> childrenByParent = new HashMap<>();
+        List<Group> roots = new ArrayList<>();
 
-        List<Group> roots = allGroups.stream()
-                .filter(g -> g.getParent() == null)
-                .collect(Collectors.toList());
+        for (Group group : allGroups) {
+            if (group.getParent() == null) {
+                roots.add(group);
+            } else {
+                UUID parentId = group.getParent().getId();
+                childrenByParent.computeIfAbsent(parentId, k -> new ArrayList<>()).add(group);
+            }
+        }
+
+        log.info("[GROUP] Building tree: workspace={} totalGroups={} roots={}",
+                targetWorkspaceId, allGroups.size(), roots.size());
 
         return roots.stream()
                 .map(root -> buildTreeNode(root, childrenByParent))
@@ -287,14 +297,18 @@ public class GroupServiceImpl implements GroupService {
         GroupTreeNode node = new GroupTreeNode();
         node.setId(group.getId());
         node.setName(group.getName());
+        node.setParentId(group.getParent() != null ? group.getParent().getId() : null);
+        node.setWorkspaceId(group.getWorkspace() != null ? group.getWorkspace().getId() : null);
         node.setLocked(group.isLocked());
         node.setSecure(group.isSecure());
         node.setFavorite(group.isFavorite());
         node.setArchived(group.isArchived());
         node.setSortOrder(group.getSortOrder());
+        node.setVisibility(group.getVisibility().name());
 
         List<Group> children = childrenByParent.getOrDefault(group.getId(), Collections.emptyList());
         node.setChildren(children.stream()
+                .sorted(Comparator.comparingInt(Group::getSortOrder))
                 .map(child -> buildTreeNode(child, childrenByParent))
                 .collect(Collectors.toList()));
 

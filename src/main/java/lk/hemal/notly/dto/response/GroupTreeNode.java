@@ -23,6 +23,14 @@ public class GroupTreeNode {
     @Schema(description = "Group name", example = "Work Projects")
     private String name;
 
+    @JsonProperty("parent_id")
+    @Schema(description = "Parent group ID (null for root)", example = "550e8400-e29b-41d4-a716-446655440001")
+    private UUID parentId;
+
+    @JsonProperty("workspace_id")
+    @Schema(description = "Workspace ID", example = "550e8400-e29b-41d4-a716-446655440002")
+    private UUID workspaceId;
+
     @JsonProperty("is_locked")
     @Schema(description = "Whether the group is locked", example = "false")
     private boolean locked;
@@ -42,6 +50,9 @@ public class GroupTreeNode {
     @JsonProperty("sort_order")
     @Schema(description = "Sort order", example = "0")
     private int sortOrder;
+
+    @Schema(description = "Visibility", example = "PRIVATE")
+    private String visibility;
 
     @Schema(description = "Child groups (recursive)")
     private List<GroupTreeNode> children;

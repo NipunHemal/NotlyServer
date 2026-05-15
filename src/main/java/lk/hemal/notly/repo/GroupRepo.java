@@ -14,6 +14,11 @@ public interface GroupRepo extends JpaRepository<Group, UUID> {
 
     List<Group> findByWorkspaceIdAndParentIsNullOrderBySortOrderAsc(UUID workspaceId);
 
+    List<Group> findByWorkspaceIdOrderBySortOrderAsc(UUID workspaceId);
+
+    @Query("SELECT g FROM Group g WHERE g.workspace.id = :workspaceId ORDER BY g.sortOrder ASC")
+    List<Group> findAllByWorkspaceId(@Param("workspaceId") UUID workspaceId);
+
     List<Group> findByParentIdOrderBySortOrderAsc(UUID parentId);
 
     Optional<Group> findByIdAndWorkspaceOwnerId(UUID id, UUID ownerId);
