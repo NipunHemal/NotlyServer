@@ -19,7 +19,7 @@ interface GroupCardProps {
 
 export function GroupCard({ group }: GroupCardProps) {
   const { setRenameGroup, setMoveGroup, setShareGroup } = useStore();
-  const deleteMutation = useDeleteGroup();
+  const deleteMutation = useDeleteGroup((group as any).parent_id);
   const favoriteMutation = useToggleGroupFavorite();
   const archiveMutation = useArchiveGroup();
   const unarchiveMutation = useUnarchiveGroup();
@@ -50,12 +50,12 @@ export function GroupCard({ group }: GroupCardProps) {
     >
       <Link href={`/groups/${group.id}`} className="absolute inset-0 z-10" />
       
-      <div className="relative z-0 flex flex-col h-full">
+      <div className="relative flex flex-col h-full">
         <div className="flex justify-between items-start mb-6">
           <div className="w-14 h-14 rounded-2xl bg-white/[0.03] flex items-center justify-center border border-white/10 text-primary group-hover/card:bg-primary/10 group-hover/card:scale-110 transition-all">
             <Folder className="w-7 h-7" />
           </div>
-          <div className="flex items-center gap-1 relative z-20">
+          <div className="flex items-center gap-1 relative z-30">
             {group.is_locked && <Lock className="w-4 h-4 text-muted-foreground/30 mr-1" />}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

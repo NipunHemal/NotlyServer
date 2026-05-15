@@ -82,10 +82,14 @@ export const useRenameGroup = () => {
 
   return useMutation({
     mutationFn: ({ id, name }: { id: string; name: string }) => renameGroup(id, name),
-    onSuccess: (data) => {
+    onSuccess: (data: Group) => {
       queryClient.invalidateQueries({ queryKey: ['groups', 'tree'] });
       queryClient.invalidateQueries({ queryKey: ['groups', data.id] });
       queryClient.invalidateQueries({ queryKey: ['groups', data.id, 'breadcrumb'] });
+      // If this group is a child, refresh parent's children list to show new name
+      if (data.parent_id) {
+        queryClient.invalidateQueries({ queryKey: ['groups', data.parent_id, 'children'] });
+      }
       toast({
         title: 'Group Renamed',
         description: `Group successfully renamed to ${data.name}.`,
@@ -105,6 +109,9 @@ export const useDeleteGroup = (parentId?: string | null) => {
       if (parentId) {
         queryClient.invalidateQueries({ queryKey: ['groups', parentId, 'children'] });
         queryClient.invalidateQueries({ queryKey: ['groups', parentId, 'stats'] });
+      } else {
+        // If it was a root group, refresh root children
+        queryClient.invalidateQueries({ queryKey: ['groups', 'root', 'children'] });
       }
       toast({
         title: 'Group Deleted',
@@ -114,17 +121,30 @@ export const useDeleteGroup = (parentId?: string | null) => {
   });
 };
 
-export const useMoveGroup = () => {
+export const useMoveGroup = (oldParentId?: string | null) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
   return useMutation({
     mutationFn: ({ id, target_parent_id, sort_order }: { id: string; target_parent_id: string | null; sort_order?: number }) => 
       moveGroup(id, target_parent_id, sort_order),
-    onSuccess: (data) => {
+    onSuccess: (data: Group) => {
       queryClient.invalidateQueries({ queryKey: ['groups', 'tree'] });
       queryClient.invalidateQueries({ queryKey: ['groups', data.id] });
       queryClient.invalidateQueries({ queryKey: ['groups', data.id, 'breadcrumb'] });
+      
+      // Invalidate old parent
+      if (oldParentId) {
+        queryClient.invalidateQueries({ queryKey: ['groups', oldParentId, 'children'] });
+        queryClient.invalidateQueries({ queryKey: ['groups', oldParentId, 'stats'] });
+      }
+      
+      // Invalidate new parent
+      if (data.parent_id) {
+        queryClient.invalidateQueries({ queryKey: ['groups', data.parent_id, 'children'] });
+        queryClient.invalidateQueries({ queryKey: ['groups', data.parent_id, 'stats'] });
+      }
+      
       toast({
         title: 'Group Moved',
         description: 'Group position updated successfully.',

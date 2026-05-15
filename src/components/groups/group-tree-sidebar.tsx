@@ -10,8 +10,9 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { useGroupTree, useToggleGroupFavorite, useDeleteGroup } from '@/service/query/useGroup';
+import { useGroupTree, useToggleGroupFavorite, useDeleteGroup, useArchiveGroup } from '@/service/query/useGroup';
 import { GroupTreeNode } from '@/service/functions/group.service';
+import { Edit2, Move, Share2, Archive, Trash2 } from 'lucide-react';
 
 interface GroupTreeItemProps {
   group: GroupTreeNode;
@@ -26,7 +27,8 @@ const GroupTreeItem = ({ group, level }: GroupTreeItemProps) => {
   const hasSubGroups = group.children && group.children.length > 0;
   const toggleFavorite = useToggleGroupFavorite();
   const deleteGroup = useDeleteGroup();
-  const setCreateGroupModalOpen = useStore((state) => state.setCreateGroupModalOpen);
+  const archiveGroup = useArchiveGroup();
+  const { setCreateGroupModalOpen, setRenameGroup, setMoveGroup, setShareGroup } = useStore();
 
   return (
     <div className="space-y-1">
@@ -76,8 +78,24 @@ const GroupTreeItem = ({ group, level }: GroupTreeItemProps) => {
             >
               <Plus className="w-4 h-4" /> Create Sub Group
             </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2 cursor-pointer">Rename</DropdownMenuItem>
-            <DropdownMenuItem className="gap-2 cursor-pointer">Move</DropdownMenuItem>
+            <DropdownMenuItem 
+              className="gap-2 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setRenameGroup(group.id);
+              }}
+            >
+              <Edit2 className="w-4 h-4" /> Rename
+            </DropdownMenuItem>
+            <DropdownMenuItem 
+              className="gap-2 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setMoveGroup(group.id);
+              }}
+            >
+              <Move className="w-4 h-4" /> Move
+            </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-white/5" />
             <DropdownMenuItem 
               className="gap-2 cursor-pointer"
@@ -86,17 +104,33 @@ const GroupTreeItem = ({ group, level }: GroupTreeItemProps) => {
               <Star className={cn("w-4 h-4", group.is_favorite && "fill-current text-yellow-500")} /> 
               {group.is_favorite ? 'Remove Favorite' : 'Add Favorite'}
             </DropdownMenuItem>
-            <DropdownMenuItem className="gap-2 cursor-pointer"><Lock className="w-4 h-4" /> Lock Group</DropdownMenuItem>
-            <DropdownMenuItem className="gap-2 cursor-pointer"><Users className="w-4 h-4" /> Share</DropdownMenuItem>
+            <DropdownMenuItem 
+              className="gap-2 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShareGroup(group.id);
+              }}
+            >
+              <Share2 className="w-4 h-4" /> Share
+            </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-white/5" />
-            <DropdownMenuItem className="gap-2 text-destructive cursor-pointer">Archive</DropdownMenuItem>
+            <DropdownMenuItem 
+              className="gap-2 text-destructive cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                archiveGroup.mutate(group.id);
+              }}
+            >
+              <Archive className="w-4 h-4" /> Archive
+            </DropdownMenuItem>
             <DropdownMenuItem 
               className="gap-2 text-destructive font-bold cursor-pointer"
-              onClick={() => {
+              onClick={(e) => {
+                e.stopPropagation();
                 if(confirm(`Are you sure you want to delete "${group.name}"?`)) deleteGroup.mutate(group.id);
               }}
             >
-              Delete
+              <Trash2 className="w-4 h-4" /> Delete
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

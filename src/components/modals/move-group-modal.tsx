@@ -14,7 +14,7 @@ export function MoveGroupModal() {
   const { moveGroupId, setMoveGroup, selectedWorkspaceId } = useStore();
   const { data: group } = useGroupById(moveGroupId || '');
   const { data: tree } = useGroupTree(selectedWorkspaceId || '');
-  const moveMutation = useMoveGroup();
+  const moveMutation = useMoveGroup(group?.parent_id);
   
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
 
