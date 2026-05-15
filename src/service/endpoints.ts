@@ -32,5 +32,10 @@ export const API_ENDPOINTS = {
   },
   WORKSPACES: {
     LIST: "/workspaces",
+  },
+  BIN: {
+    BASE: "/bin",
+    RESTORE: (id: string) => `/bin/${id}/restore`,
+    BY_ID: (id: string) => `/bin/${id}`,
   }
 };
