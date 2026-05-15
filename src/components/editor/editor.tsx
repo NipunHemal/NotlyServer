@@ -55,9 +55,20 @@ export function NotionEditor({ note, onUpdate, isSaving }: EditorProps) {
   const duplicateMutation = useDuplicateNote();
   const deleteMutation = useDeleteNote(note.group_id);
 
+  // Parse content_json: backend sends it as a JSON string, Tiptap needs an object
+  const parseContent = useCallback((raw: any): any => {
+    if (!raw) return '';
+    if (typeof raw === 'object') return raw; // already parsed
+    try {
+      return JSON.parse(raw);
+    } catch {
+      return raw; // fallback to raw string if parse fails
+    }
+  }, []);
+
   const debouncedContentSave = useAutosave({
     onSave: (contentJson: any) => {
-      onUpdate({ contentJson });
+      onUpdate({ contentJson: JSON.stringify(contentJson) });
     },
   });
 
@@ -67,9 +78,11 @@ export function NotionEditor({ note, onUpdate, isSaving }: EditorProps) {
     },
   });
 
+  const initialContent = parseContent(note.content_json) || note.content || '';
+
   const editor = useEditor({
     extensions: EDITOR_EXTENSIONS,
-    content: note.content_json || note.content || '',
+    content: initialContent,
     editorProps: {
       attributes: {
         class: 'focus:outline-none min-h-[500px] px-1',
@@ -95,11 +108,12 @@ export function NotionEditor({ note, onUpdate, isSaving }: EditorProps) {
 
   // Hydrate content if note changes (e.g. from version restore)
   useEffect(() => {
-    if (editor && note.content_json && JSON.stringify(note.content_json) !== JSON.stringify(editor.getJSON())) {
-      editor.commands.setContent(note.content_json);
+    const parsed = parseContent(note.content_json);
+    if (editor && parsed && JSON.stringify(parsed) !== JSON.stringify(editor.getJSON())) {
+      editor.commands.setContent(parsed);
     }
     setTitle(note.title);
-  }, [note.id, editor, note.content_json, note.title]);
+  }, [note.id, editor, note.content_json, note.title, parseContent]);
 
   // Auto-resize title textarea
   const autoResizeTitle = useCallback((el: HTMLTextAreaElement | null) => {

@@ -7,7 +7,7 @@ import { GroupTreeSidebar } from '@/components/groups/group-tree-sidebar';
 import { GroupHeader } from '@/components/groups/group-header';
 import { GroupStats } from '@/components/groups/group-stats';
 import { GroupCard } from '@/components/groups/group-card';
-import { DocCard } from '@/components/documents/doc-card';
+import { NoteCard } from '@/components/documents/note-card';
 import { BreadcrumbNavigation } from '@/components/groups/breadcrumb-navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -162,8 +162,8 @@ export default function GroupDetailsPage({ params }: { params: Promise<{ id: str
                     </div>
                   ) : groupNotes.length > 0 ? (
                     <div className={view === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-3"}>
-                      {groupNotes.map(note => (
-                        <DocCard key={note.id} note={note} />
+                      {groupNotes.map((note: any) => (
+                        <NoteCard key={note.id} note={note} />
                       ))}
                     </div>
                   ) : (
@@ -200,8 +200,8 @@ export default function GroupDetailsPage({ params }: { params: Promise<{ id: str
 
               <TabsContent value="notes" className="m-0 outline-none">
                 <div className={view === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-3"}>
-                  {groupNotes.map(note => (
-                    <DocCard key={note.id} note={note} />
+                  {groupNotes.map((note: any) => (
+                    <NoteCard key={note.id} note={note} />
                   ))}
                 </div>
               </TabsContent>
