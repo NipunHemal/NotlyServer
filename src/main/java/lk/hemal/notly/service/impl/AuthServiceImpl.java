@@ -18,6 +18,7 @@ import lk.hemal.notly.repo.GroupRepo;
 import lk.hemal.notly.repo.UserRepo;
 import lk.hemal.notly.repo.WorkspaceRepo;
 import lk.hemal.notly.service.AuthService;
+import lk.hemal.notly.service.EmailNotificationService;
 import lk.hemal.notly.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +46,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserMapper userMapper;
     private final GoogleOAuthConfig googleOAuthConfig;
     private final ObjectMapper objectMapper;
+    private final EmailNotificationService emailNotificationService;
 
 
     /**
@@ -90,6 +92,8 @@ public class AuthServiceImpl implements AuthService {
         groupRepo.save(rootGroup);
 
         log.info("[AUTH] Workspace and root group created for user id={}", user.getId());
+
+        emailNotificationService.sendWelcomeEmail(user);
 
         return buildAuthResponse(user);
     }

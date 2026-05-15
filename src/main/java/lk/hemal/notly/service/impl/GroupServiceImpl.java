@@ -21,6 +21,7 @@ import lk.hemal.notly.repo.GroupRepo;
 import lk.hemal.notly.repo.NoteRepo;
 import lk.hemal.notly.repo.UserRepo;
 import lk.hemal.notly.service.ActivityLogService;
+import lk.hemal.notly.service.EmailNotificationService;
 import lk.hemal.notly.service.GroupService;
 import lk.hemal.notly.service.LockAttemptService;
 import lk.hemal.notly.service.WorkspaceService;
@@ -52,6 +53,7 @@ public class GroupServiceImpl implements GroupService {
     private final JwtUtil jwtUtil;
     private final ActivityLogService activityLogService;
     private final LockAttemptService lockAttemptService;
+    private final EmailNotificationService emailNotificationService;
 
     @Override
     @Transactional
@@ -689,6 +691,8 @@ public class GroupServiceImpl implements GroupService {
                 group.getId(), ActivityLog.ActivityAction.SHARED,
                 Map.of("with", targetUser.getId(), "role", role.name()));
 
+        emailNotificationService.sendGroupShareInvitation(user, targetUser, group, role.name());
+
         log.info("[GROUP] Shared id={} with user={} role={}", group.getId(), targetUser.getId(), role);
         return toCollaboratorResponse(collaborator);
     }
@@ -718,6 +722,10 @@ public class GroupServiceImpl implements GroupService {
         collaborator.setRole(req.getRole());
         groupCollaboratorRepo.save(collaborator);
 
+        User targetUser = userRepo.findById(userId)
+                .orElseThrow(() -> new NotlyException(ErrorCode.INVALID_CREDENTIALS, "User not found"));
+        emailNotificationService.sendCollaboratorRoleChanged(user, targetUser, group, req.getRole().name());
+
         log.info("[GROUP] Collaborator role updated group={} user={} role={}", groupId, userId, req.getRole());
         return toCollaboratorResponse(collaborator);
     }
@@ -727,7 +735,12 @@ public class GroupServiceImpl implements GroupService {
     public void removeCollaborator(UUID groupId, UUID userId, User user) {
         Group group = requireOwnedGroup(groupId, user);
 
+        User targetUser = userRepo.findById(userId)
+                .orElseThrow(() -> new NotlyException(ErrorCode.INVALID_CREDENTIALS, "User not found"));
+
         groupCollaboratorRepo.deleteByGroupIdAndUserId(groupId, userId);
+
+        emailNotificationService.sendCollaboratorRemoved(user, targetUser, group);
 
         long remainingCollaborators = groupCollaboratorRepo.findByGroupId(groupId).size();
         if (remainingCollaborators == 0 && group.getVisibility() == Group.Visibility.SHARED) {

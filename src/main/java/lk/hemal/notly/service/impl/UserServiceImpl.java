@@ -8,6 +8,7 @@ import lk.hemal.notly.exception.ErrorCode;
 import lk.hemal.notly.exception.NotlyException;
 import lk.hemal.notly.mapper.UserMapper;
 import lk.hemal.notly.repo.UserRepo;
+import lk.hemal.notly.service.EmailNotificationService;
 import lk.hemal.notly.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +26,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepo userRepo;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final EmailNotificationService emailNotificationService;
 
     @Override
     public UserResponseDto getCurrentUser(UUID userId) {
@@ -57,6 +59,9 @@ public class UserServiceImpl implements UserService {
 
         user = userRepo.save(user);
         log.info("[USER] Profile updated: id={}", user.getId());
+
+        emailNotificationService.sendProfileUpdatedNotification(user);
+
         return userMapper.toDto(user);
     }
 
@@ -84,6 +89,8 @@ public class UserServiceImpl implements UserService {
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepo.save(user);
         log.info("[USER] Password changed: id={}", user.getId());
+
+        emailNotificationService.sendPasswordChangedNotification(user);
     }
 
     @Transactional
@@ -96,5 +103,7 @@ public class UserServiceImpl implements UserService {
         user.setCurrentRefreshToken(null);
         userRepo.save(user);
         log.info("[USER] Account deactivated: id={}", user.getId());
+
+        emailNotificationService.sendAccountDeletedNotification(user);
     }
 }
