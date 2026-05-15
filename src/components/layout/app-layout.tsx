@@ -18,6 +18,10 @@ import { useMe } from '@/service/query/useUser';
 import { useWorkspaces } from '@/service/query/useWorkspace';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
+import { RenameGroupModal } from '@/components/modals/rename-group-modal';
+import { MoveGroupModal } from '@/components/modals/move-group-modal';
+import { ShareGroupModal } from '@/components/modals/share-group-modal';
+
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { sidebarOpen, setCreateNoteModalOpen, setSearchOpen, user, isAuthenticated } = useStore();
@@ -184,6 +188,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
       <GlobalSearch />
       <CreateNoteModal />
       <CreateGroupModal />
+      <RenameGroupModal />
+      <MoveGroupModal />
+      <ShareGroupModal />
     </SidebarProvider>
   );
 }

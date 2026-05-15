@@ -32,7 +32,7 @@ interface GroupHeaderProps {
 export function GroupHeader({ group }: GroupHeaderProps) {
   const toggleFavorite = useToggleGroupFavorite();
   const { data: collaborators } = useCollaborators(group.id);
-  const setCreateGroupModalOpen = useStore((state) => state.setCreateGroupModalOpen);
+  const { setCreateGroupModalOpen, setShareGroup, setRenameGroup } = useStore();
 
   return (
     <header className="space-y-6">
@@ -114,7 +114,12 @@ export function GroupHeader({ group }: GroupHeaderProps) {
             </div>
 
             <div className="flex items-center bg-white/[0.03] border border-white/5 rounded-2xl p-1.5 gap-1.5 shadow-xl">
-              <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl hover:bg-white/10 transition-all">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="w-10 h-10 rounded-xl hover:bg-white/10 transition-all"
+                onClick={() => setShareGroup(group.id)}
+              >
                 <Share2 className="w-5 h-5" />
               </Button>
               <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl hover:bg-white/10 transition-all">
@@ -133,7 +138,12 @@ export function GroupHeader({ group }: GroupHeaderProps) {
               </Button>
             </div>
 
-            <Button variant="ghost" size="icon" className="w-11 h-11 rounded-xl hover:bg-white/10 border border-white/5 shadow-xl">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="w-11 h-11 rounded-xl hover:bg-white/10 border border-white/5 shadow-xl"
+              onClick={() => setRenameGroup(group.id)}
+            >
               <Settings className="w-5 h-5" />
             </Button>
           </TooltipProvider>

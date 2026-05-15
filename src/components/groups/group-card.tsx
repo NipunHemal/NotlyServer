@@ -4,11 +4,12 @@
 import React from 'react';
 import { Group, GroupTreeNode } from '@/service/functions/group.service';
 import { motion } from 'framer-motion';
-import { Folder, MoreVertical, FileText, Clock, Archive, Trash2, Move, Edit2, Lock, Star } from 'lucide-react';
+import { Folder, MoreVertical, FileText, Clock, Archive, Trash2, Move, Edit2, Lock, Star, Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import Link from 'next/link';
-import { useDeleteGroup, useToggleGroupFavorite } from '@/service/query/useGroup';
+import { useDeleteGroup, useToggleGroupFavorite, useArchiveGroup, useUnarchiveGroup } from '@/service/query/useGroup';
+import { useStore } from '@/store/use-store';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -17,8 +18,11 @@ interface GroupCardProps {
 }
 
 export function GroupCard({ group }: GroupCardProps) {
+  const { setRenameGroup, setMoveGroup, setShareGroup } = useStore();
   const deleteMutation = useDeleteGroup();
   const favoriteMutation = useToggleGroupFavorite();
+  const archiveMutation = useArchiveGroup();
+  const unarchiveMutation = useUnarchiveGroup();
 
   const handleDelete = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -60,13 +64,28 @@ export function GroupCard({ group }: GroupCardProps) {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-52 glass-panel border-white/10 bg-popover/90 backdrop-blur-xl p-1.5">
-                <DropdownMenuItem className="gap-2 rounded-xl cursor-pointer"><Edit2 className="w-4 h-4" /> Rename</DropdownMenuItem>
-                <DropdownMenuItem className="gap-2 rounded-xl cursor-pointer"><Move className="w-4 h-4" /> Move</DropdownMenuItem>
+                <DropdownMenuItem className="gap-2 rounded-xl cursor-pointer" onClick={() => setRenameGroup(group.id)}>
+                  <Edit2 className="w-4 h-4" /> Rename
+                </DropdownMenuItem>
+                <DropdownMenuItem className="gap-2 rounded-xl cursor-pointer" onClick={() => setMoveGroup(group.id)}>
+                  <Move className="w-4 h-4" /> Move
+                </DropdownMenuItem>
+                <DropdownMenuItem className="gap-2 rounded-xl cursor-pointer" onClick={() => setShareGroup(group.id)}>
+                  <Share2 className="w-4 h-4" /> Share
+                </DropdownMenuItem>
                 <DropdownMenuItem className="gap-2 rounded-xl cursor-pointer" onClick={toggleFavorite}>
                   <Star className={cn("w-4 h-4", group.is_favorite && "fill-current text-yellow-500")} /> 
                   {group.is_favorite ? 'Remove Favorite' : 'Add Favorite'}
                 </DropdownMenuItem>
-                <DropdownMenuItem className="gap-2 rounded-xl cursor-pointer"><Archive className="w-4 h-4" /> Archive</DropdownMenuItem>
+                {group.is_archived ? (
+                  <DropdownMenuItem className="gap-2 rounded-xl cursor-pointer" onClick={() => unarchiveMutation.mutate(group.id)}>
+                    <Archive className="w-4 h-4" /> Unarchive
+                  </DropdownMenuItem>
+                ) : (
+                  <DropdownMenuItem className="gap-2 rounded-xl cursor-pointer" onClick={() => archiveMutation.mutate(group.id)}>
+                    <Archive className="w-4 h-4" /> Archive
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem 
                   className="gap-2 rounded-xl text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer font-bold"
                   onClick={handleDelete}

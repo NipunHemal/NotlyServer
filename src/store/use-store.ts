@@ -89,6 +89,12 @@ interface AppState {
   createGroupParentId: string | null;
   isUploadModalOpen: boolean;
   
+  // Group Action Modals
+  shareGroupId: string | null;
+  moveGroupId: string | null;
+  lockGroupId: string | null;
+  renameGroupId: string | null;
+  
   // Workspace State
   workspaces: any[];
   selectedWorkspaceId: string | null;
@@ -114,6 +120,10 @@ interface AppState {
   setSaving: (saving: boolean) => void;
   setWorkspaces: (workspaces: any[]) => void;
   setSelectedWorkspaceId: (id: string | null) => void;
+  setShareGroup: (id: string | null) => void;
+  setMoveGroup: (id: string | null) => void;
+  setLockGroup: (id: string | null) => void;
+  setRenameGroup: (id: string | null) => void;
   addActivity: (activity: Omit<Activity, 'id' | 'timestamp' | 'user'>) => void;
   createVersion: (noteId: string, label: string) => void;
   restoreVersion: (noteId: string, versionId: string) => void;
@@ -185,6 +195,10 @@ export const useStore = create<AppState>()(
       isUploadModalOpen: false,
       workspaces: [],
       selectedWorkspaceId: null,
+      shareGroupId: null,
+      moveGroupId: null,
+      lockGroupId: null,
+      renameGroupId: null,
 
       setAuth: (user, accessToken, refreshToken) => {
         Cookies.set('accessToken', accessToken, { expires: 7 });
@@ -346,6 +360,10 @@ export const useStore = create<AppState>()(
       setUploadModalOpen: (open) => set({ isUploadModalOpen: open }),
       setWorkspaces: (workspaces) => set({ workspaces }),
       setSelectedWorkspaceId: (id) => set({ selectedWorkspaceId: id }),
+      setShareGroup: (id) => set({ shareGroupId: id }),
+      setMoveGroup: (id) => set({ moveGroupId: id }),
+      setLockGroup: (id) => set({ lockGroupId: id }),
+      setRenameGroup: (id) => set({ renameGroupId: id }),
     }),
     {
       name: 'notly-storage',
