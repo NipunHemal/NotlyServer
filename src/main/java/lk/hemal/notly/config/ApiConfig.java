@@ -12,6 +12,7 @@ public class ApiConfig {
     // values will be set in application.yml or env
     private final String[] allowedOrigins = {
             "http://localhost:9002",
+            "http://localhost:3000",
             "http://127.0.0.1:3000"
     };
 
