@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lk.hemal.notly.config.ApiConfig;
+import lk.hemal.notly.dto.request.GoogleAuthRequest;
 import lk.hemal.notly.dto.request.LoginRequestDto;
 import lk.hemal.notly.dto.request.RefreshRequestDto;
 import lk.hemal.notly.dto.request.RegisterRequestDto;
@@ -105,5 +106,22 @@ public class AuthController {
 
         authService.logout(refreshToken);
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(
+            summary = "Authenticate with Google",
+            description = "Authenticates user using Google OAuth2 authorization code. Exchanges code for tokens and returns JWT access/refresh tokens."
+    )
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Google authentication successful",
+                    content = @Content(schema = @Schema(implementation = AuthResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid authorization code",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "409", description = "Email already registered with password",
+                    content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PostMapping("/google")
+    public ResponseEntity<AuthResponseDto> googleAuth(@Valid @RequestBody GoogleAuthRequest request) {
+        return ResponseEntity.ok(authService.googleAuth(request));
     }
 }

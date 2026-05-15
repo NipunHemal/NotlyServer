@@ -1,5 +1,9 @@
 package lk.hemal.notly.service.impl;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lk.hemal.notly.config.GoogleOAuthConfig;
+import lk.hemal.notly.dto.request.GoogleAuthRequest;
 import lk.hemal.notly.dto.request.LoginRequestDto;
 import lk.hemal.notly.dto.request.RefreshRequestDto;
 import lk.hemal.notly.dto.request.RegisterRequestDto;
@@ -17,10 +21,14 @@ import lk.hemal.notly.service.AuthService;
 import lk.hemal.notly.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.*;
 import org.springframework.security.authentication.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import java.util.UUID;
 
@@ -35,6 +43,8 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final UserMapper userMapper;
+    private final GoogleOAuthConfig googleOAuthConfig;
+    private final ObjectMapper objectMapper;
 
 
     /**
@@ -150,6 +160,126 @@ public class AuthServiceImpl implements AuthService {
         user.setCurrentRefreshToken(null);
         userRepo.save(user);
         log.info("[AUTH] Logout: id={} email={}", user.getId(), user.getEmail());
+    }
+
+    @Transactional
+    public AuthResponseDto googleAuth(GoogleAuthRequest request) {
+        String code = request.getCode();
+        String redirectUri = request.getRedirectUri() != null
+                ? request.getRedirectUri()
+                : googleOAuthConfig.getRedirectUri();
+
+        String accessToken = exchangeCodeForToken(code, redirectUri);
+        JsonNode userInfo = fetchGoogleUserInfo(accessToken);
+
+        String googleId = userInfo.get("sub").asText();
+        String email = userInfo.get("email").asText();
+        String name = userInfo.has("name") ? userInfo.get("name").asText() : email;
+        String picture = userInfo.has("picture") ? userInfo.get("picture").asText() : null;
+
+        User user = userRepo.findByOauthProviderAndProviderId(User.OAuthProvider.GOOGLE, googleId)
+                .orElse(null);
+
+        if (user == null && userRepo.existsByEmail(email)) {
+            throw new NotlyException(ErrorCode.EMAIL_ALREADY_EXISTS,
+                    "Email '" + email + "' is already registered. Please login with your password.");
+        }
+
+        if (user == null) {
+            user = createGoogleUser(googleId, email, name, picture);
+        }
+
+        log.info("[AUTH] Google OAuth: id={} email={}", user.getId(), user.getEmail());
+        return buildAuthResponse(user);
+    }
+
+    private String exchangeCodeForToken(String code, String redirectUri) {
+        RestTemplate restTemplate = new RestTemplate();
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("code", code);
+        params.add("client_id", googleOAuthConfig.getClientId());
+        params.add("client_secret", googleOAuthConfig.getClientSecret());
+        params.add("redirect_uri", redirectUri);
+        params.add("grant_type", "authorization_code");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(params, headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.postForEntity(
+                    googleOAuthConfig.getTokenUrl(), request, String.class);
+
+            JsonNode jsonNode = objectMapper.readTree(response.getBody());
+            return jsonNode.get("access_token").asText();
+        } catch (Exception e) {
+            log.error("[AUTH] Failed to exchange code for token", e);
+            throw new NotlyException(ErrorCode.INVALID_CREDENTIALS, "Failed to authenticate with Google");
+        }
+    }
+
+    private JsonNode fetchGoogleUserInfo(String accessToken) {
+        RestTemplate restTemplate = new RestTemplate();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(accessToken);
+
+        HttpEntity<String> request = new HttpEntity<>(headers);
+
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(
+                    googleOAuthConfig.getUserInfoUrl(),
+                    HttpMethod.GET,
+                    request,
+                    String.class);
+
+            return objectMapper.readTree(response.getBody());
+        } catch (Exception e) {
+            log.error("[AUTH] Failed to fetch Google user info", e);
+            throw new NotlyException(ErrorCode.INVALID_CREDENTIALS, "Failed to get user information from Google");
+        }
+    }
+
+    private User createGoogleUser(String googleId, String email, String name, String picture) {
+        String baseUsername = email.split("@")[0];
+        String username = baseUsername;
+        int counter = 1;
+        while (userRepo.existsByUsername(username)) {
+            username = baseUsername + counter;
+            counter++;
+        }
+
+        User user = User.builder()
+                .username(username)
+                .email(email)
+                .role(User.SystemRole.USER)
+                .oauthProvider(User.OAuthProvider.GOOGLE)
+                .providerId(googleId)
+                .displayName(name)
+                .avatarUrl(picture)
+                .isEmailVerified(true)
+                .build();
+
+        user = userRepo.save(user);
+
+        Workspace workspace = new Workspace();
+        workspace.setOwner(user);
+        workspace.setName("My Workspace");
+        workspace.setPublic(false);
+        workspaceRepo.save(workspace);
+
+        Group rootGroup = new Group();
+        rootGroup.setWorkspace(workspace);
+        rootGroup.setParent(null);
+        rootGroup.setName("Workspace");
+        rootGroup.setSortOrder(0);
+        groupRepo.save(rootGroup);
+
+        log.info("[AUTH] Google user created with workspace: user id={}", user.getId());
+
+        return user;
     }
 
 

@@ -1,5 +1,6 @@
 package lk.hemal.notly.service;
 
+import lk.hemal.notly.dto.request.GoogleAuthRequest;
 import lk.hemal.notly.dto.request.LoginRequestDto;
 import lk.hemal.notly.dto.request.RefreshRequestDto;
 import lk.hemal.notly.dto.request.RegisterRequestDto;
@@ -14,4 +15,6 @@ public interface AuthService {
     AuthResponseDto refresh(RefreshRequestDto req);
 
     void logout(String refreshToken);
+
+    AuthResponseDto googleAuth(GoogleAuthRequest request);
 }
