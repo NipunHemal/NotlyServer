@@ -55,5 +55,13 @@ export const API_ENDPOINTS = {
     REGENERATE_LINK: (id: string) => `/notes/${id}/public-link/regenerate`,
     REVOKE_LINK: (id: string) => `/notes/${id}/public-link`,
     PUBLIC_NOTE: (token: string) => `/notes/public/${token}`,
+  },
+  ACTIVITIES: {
+    ME: "/activities/me",
+    ME_BY_ENTITY: (entityType: string) => `/activities/me/entity/${entityType}`,
+    ME_BY_ACTION: (action: string) => `/activities/me/action/${action}`,
+    ENTITY: (entityType: string, entityId: string) => `/activities/entity/${entityType}/${entityId}`,
+    ME_RANGE: "/activities/me/range",
+    ME_STATS: "/activities/me/stats",
   }
 };
