@@ -1,7 +1,9 @@
 package lk.hemal.notly.dto.request;
 
+import com.fasterxml.jackson.annotation.JsonRawValue;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 /**
@@ -15,9 +17,9 @@ public class NoteAutosaveRequest {
     @Schema(description = "Note title", example = "Meeting Notes")
     private String title;
 
-    @NotBlank(message = "Content is required")
-    @Schema(description = "Editor content as Tiptap/JSON string", example = "{\"type\":\"doc\",\"content\":[]}")
-    private String contentJson;
+    @NotNull(message = "Content is required")
+    @Schema(description = "Editor content as Tiptap JSON object", example = "{\"type\":\"doc\",\"content\":[]}")
+    private JsonNode contentJson;
 
     @Schema(description = "Client-side optimistic lock version", example = "5")
     private Long clientVersion;

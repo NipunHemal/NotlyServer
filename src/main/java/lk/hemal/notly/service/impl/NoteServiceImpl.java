@@ -30,6 +30,9 @@ import lk.hemal.notly.repo.NoteVersionRepo;
 import lk.hemal.notly.service.ActivityLogService;
 import lk.hemal.notly.service.LockAttemptService;
 import lk.hemal.notly.service.NoteService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lk.hemal.notly.util.ContentHashUtil;
 import lk.hemal.notly.util.JwtUtil;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +62,7 @@ public class NoteServiceImpl implements NoteService {
     private final ActivityLogService activityLogService;
     private final LockAttemptService lockAttemptService;
     private final PasswordEncoder passwordEncoder;
+    private final ObjectMapper objectMapper;
 
     @Override
     @Transactional
@@ -77,9 +81,7 @@ public class NoteServiceImpl implements NoteService {
         note.setTitle(req.getTitle() != null && !req.getTitle().isBlank() ? req.getTitle() : "Untitled");
 
         // Handle content initialization
-        String contentJson = req.getContentJson() != null && !req.getContentJson().isBlank()
-                ? req.getContentJson()
-                : "{\"type\":\"doc\",\"content\":[]}";
+        String contentJson = jsonNodeToString(req.getContentJson());
         note.setContentJson(contentJson);
         note.setContent(req.getContent() != null ? req.getContent() : "");
         note.setContentHash(ContentHashUtil.hash(contentJson));
@@ -191,7 +193,8 @@ public class NoteServiceImpl implements NoteService {
                     "Note was modified by another session. Please refresh and try again.");
         }
 
-        String newHash = ContentHashUtil.hash(req.getContentJson());
+        String contentJson = jsonNodeToString(req.getContentJson());
+        String newHash = ContentHashUtil.hash(contentJson);
 
         // Deduplication: skip if content hasn't changed
         if (ContentHashUtil.isSameContent(newHash, note.getContentHash())) {
@@ -206,7 +209,7 @@ public class NoteServiceImpl implements NoteService {
         if (req.getTitle() != null) {
             note.setTitle(req.getTitle());
         }
-        note.setContentJson(req.getContentJson());
+        note.setContentJson(contentJson);
         note.setContentHash(newHash);
         note.setVersionNumber(note.getVersionNumber() + 1);
         note.setLastAutosaveAt(java.time.LocalDateTime.now());
@@ -678,5 +681,20 @@ public class NoteServiceImpl implements NoteService {
         }
 
         return true;
+    }
+
+    private String jsonNodeToString(JsonNode jsonNode) {
+        if (jsonNode == null || jsonNode.isNull()) {
+            return "{\"type\":\"doc\",\"content\":[]}";
+        }
+        if (jsonNode.isTextual()) {
+            return jsonNode.asText();
+        }
+        try {
+            return objectMapper.writeValueAsString(jsonNode);
+        } catch (JsonProcessingException e) {
+            log.error("[NOTE] Failed to serialize JsonNode", e);
+            throw new NotlyException(ErrorCode.BAD_REQUEST, "Invalid JSON content");
+        }
     }
 }

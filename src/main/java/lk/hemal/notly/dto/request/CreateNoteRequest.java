@@ -1,6 +1,7 @@
 package lk.hemal.notly.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -29,6 +30,6 @@ public class CreateNoteRequest {
     private String content;
 
     @JsonProperty("content_json")
-    @Schema(description = "Rich editor content as Tiptap JSON", example = "{\"type\":\"doc\",\"content\":[]}")
-    private String contentJson;
+    @Schema(description = "Rich editor content as Tiptap JSON object", example = "{\"type\":\"doc\",\"content\":[]}")
+    private JsonNode contentJson;
 }
