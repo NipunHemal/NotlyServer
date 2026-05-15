@@ -22,7 +22,7 @@ import { RenameGroupModal } from '@/components/modals/rename-group-modal';
 import { MoveGroupModal } from '@/components/modals/move-group-modal';
 import { ShareGroupModal } from '@/components/modals/share-group-modal';
 
-export function AppLayout({ children }: { children: React.ReactNode }) {
+export function AppLayout({ children, hideSidebar = false }: { children: React.ReactNode; hideSidebar?: boolean }) {
   const pathname = usePathname();
   const { sidebarOpen, setCreateNoteModalOpen, setSearchOpen, user, isAuthenticated } = useStore();
   const logoutMutation = useLogout();
@@ -41,15 +41,16 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <SidebarProvider defaultOpen={sidebarOpen}>
+    <SidebarProvider defaultOpen={!hideSidebar}>
       <div className="flex h-screen w-full bg-background overflow-hidden selection:bg-primary/30 selection:text-white">
-        <Sidebar className="border-r border-white/5 bg-sidebar">
-          <SidebarHeader className="p-6">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-xl">N</div>
-              <span className="font-bold text-lg tracking-tight">Notly</span>
-            </div>
-          </SidebarHeader>
+        {!hideSidebar && (
+          <Sidebar className="border-r border-white/5 bg-sidebar">
+            <SidebarHeader className="p-6">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-xl">N</div>
+                <span className="font-bold text-lg tracking-tight">Notly</span>
+              </div>
+            </SidebarHeader>
           <SidebarContent className="px-4">
             <SidebarGroup>
               <SidebarGroupContent>
@@ -135,6 +136,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
             </DropdownMenu>
           </SidebarFooter>
         </Sidebar>
+        )}
 
         <main className="flex-1 flex flex-col min-w-0 relative">
           <header className="h-20 flex items-center justify-between px-10 border-b border-white/5 bg-background/50 backdrop-blur-xl sticky top-0 z-50">
@@ -157,13 +159,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
                 <Bell className="w-5 h-5" />
                 <span className="absolute top-3 right-3 w-2.5 h-2.5 bg-primary rounded-full ring-4 ring-background"></span>
               </Button>
-              <Button 
-                onClick={() => setCreateNoteModalOpen(true)}
-                className="rounded-2xl h-12 px-8 gap-3 bg-primary hover:bg-primary/90 transition-all shadow-2xl shadow-primary/20 text-white font-black"
-              >
-                <Plus className="w-5 h-5 stroke-[3]" />
-                <span className="hidden sm:inline">New Doc</span>
-              </Button>
+              <Link href="/new">
+                <Button 
+                  className="rounded-2xl h-12 px-8 gap-3 bg-primary hover:bg-primary/90 transition-all shadow-2xl shadow-primary/20 text-white font-black"
+                >
+                  <Plus className="w-5 h-5 stroke-[3]" />
+                  <span className="hidden sm:inline">New Doc</span>
+                </Button>
+              </Link>
             </div>
           </header>
 

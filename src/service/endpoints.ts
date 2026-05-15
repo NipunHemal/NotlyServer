@@ -38,5 +38,22 @@ export const API_ENDPOINTS = {
     BASE: "/bin",
     RESTORE: (id: string) => `/bin/${id}/restore`,
     BY_ID: (id: string) => `/bin/${id}`,
+  },
+  NOTES: {
+    BASE: "/notes",
+    BY_ID: (id: string) => `/notes/${id}`,
+    VERSIONS: (id: string) => `/notes/${id}/versions`,
+    RESTORE_VERSION: (id: string, versionId: string) => `/notes/${id}/versions/${versionId}/restore`,
+    FAVORITE: (id: string) => `/notes/${id}/favorite`,
+    MOVE: (id: string) => `/notes/${id}/move`,
+    DUPLICATE: (id: string) => `/notes/${id}/duplicate`,
+    COPY: (id: string) => `/notes/${id}/copy`,
+    AUTOSAVE: (id: string) => `/notes/${id}/autosave`,
+    ARCHIVE: (id: string) => `/notes/${id}/archive`,
+    UNARCHIVE: (id: string) => `/notes/${id}/unarchive`,
+    PUBLIC_LINK: (id: string) => `/notes/${id}/public-link`,
+    REGENERATE_LINK: (id: string) => `/notes/${id}/public-link/regenerate`,
+    REVOKE_LINK: (id: string) => `/notes/${id}/public-link`,
+    PUBLIC_NOTE: (token: string) => `/notes/public/${token}`,
   }
 };

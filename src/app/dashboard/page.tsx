@@ -9,6 +9,7 @@ import { useStore } from '@/store/use-store';
 import { RecentActivity } from '@/components/dashboard/recent-activity';
 import { ChevronRight, Plus, Sparkles, Search, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 
 export default function Home() {
@@ -29,9 +30,11 @@ export default function Home() {
               Your intelligent workspace is ready. You have <span className="text-foreground font-semibold">12 new insights</span> since yesterday. What's the plan today?
             </p>
             <div className="flex items-center gap-4 pt-4">
-              <Button size="lg" className="rounded-full px-8 gap-2 bg-foreground text-background hover:bg-foreground/90 font-semibold shadow-2xl">
-                <Plus className="w-5 h-5" /> Start New Doc
-              </Button>
+              <Link href="/new">
+                <Button size="lg" className="rounded-full px-8 gap-2 bg-foreground text-background hover:bg-foreground/90 font-semibold shadow-2xl">
+                  <Plus className="w-5 h-5" /> Start New Doc
+                </Button>
+              </Link>
               <Button size="lg" variant="outline" className="rounded-full px-8 gap-2 border-white/10 hover:bg-white/5 font-semibold">
                 <Layers className="w-5 h-5" /> Browse Groups
               </Button>
