@@ -1,4 +1,3 @@
-
 "use client";
 
 import React from 'react';
@@ -7,14 +6,18 @@ import { StatsGrid } from '@/components/dashboard/stats-grid';
 import { DocCard } from '@/components/documents/doc-card';
 import { useStore } from '@/store/use-store';
 import { RecentActivity } from '@/components/dashboard/recent-activity';
-import { ChevronRight, Plus, Sparkles, Search, Layers } from 'lucide-react';
+import { ChevronRight, Plus, Sparkles, Layers } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { useDashboardStats, useDashboardRecent } from '@/service/query/useDashboard';
 
 export default function Home() {
   const { notes, groups } = useStore();
   const recentNotes = notes.filter(n => !n.isDeleted).slice(0, 3);
+
+  const { data: stats, isLoading: isStatsLoading } = useDashboardStats();
+  const { data: recentFeed, isLoading: isRecentLoading } = useDashboardRecent();
 
   return (
     <AppLayout>
@@ -27,7 +30,7 @@ export default function Home() {
           <div className="relative z-10 max-w-2xl space-y-4">
             <h1 className="text-5xl font-bold tracking-tighter">Welcome back, Alex.</h1>
             <p className="text-xl text-muted-foreground/80 leading-relaxed">
-              Your intelligent workspace is ready. You have <span className="text-foreground font-semibold">12 new insights</span> since yesterday. What's the plan today?
+              Your intelligent workspace is ready. You have <span className="text-foreground font-semibold">{stats?.activitiesToday || 0} new insights</span> since yesterday. What's the plan today?
             </p>
             <div className="flex items-center gap-4 pt-4">
               <Link href="/new">
@@ -35,9 +38,11 @@ export default function Home() {
                   <Plus className="w-5 h-5" /> Start New Doc
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="rounded-full px-8 gap-2 border-white/10 hover:bg-white/5 font-semibold">
-                <Layers className="w-5 h-5" /> Browse Groups
-              </Button>
+              <Link href="/groups">
+                <Button size="lg" variant="outline" className="rounded-full px-8 gap-2 border-white/10 hover:bg-white/5 font-semibold">
+                  <Layers className="w-5 h-5" /> Browse Groups
+                </Button>
+              </Link>
             </div>
           </div>
         </section>
@@ -46,11 +51,13 @@ export default function Home() {
         <section>
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-2xl font-bold tracking-tight">Overview</h2>
-            <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
-              View full analytics <ChevronRight className="ml-1 w-4 h-4" />
-            </Button>
+            <Link href="/activities">
+              <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+                View full analytics <ChevronRight className="ml-1 w-4 h-4" />
+              </Button>
+            </Link>
           </div>
-          <StatsGrid />
+          <StatsGrid stats={stats} isLoading={isStatsLoading} />
         </section>
 
         {/* Grid for Content */}
@@ -65,7 +72,7 @@ export default function Home() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {groups.map((group, idx) => (
-                  <motion.div 
+                  <motion.div
                     key={group.id}
                     whileHover={{ scale: 1.02 }}
                     className="glass-card p-5 rounded-2xl flex flex-col gap-4 group cursor-pointer"
@@ -98,17 +105,19 @@ export default function Home() {
 
           {/* Activity Column */}
           <aside className="space-y-8">
-            <div className="glass-panel p-8 rounded-[2rem] sticky top-24">
+            <div className="glass-panel p-8 rounded-[2rem] sticky top-24 border border-white/5 bg-white/[0.02]">
               <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
                 Recent Activity
               </h2>
-              <RecentActivity />
-              <Button variant="outline" className="w-full mt-8 rounded-xl border-white/10 hover:bg-white/5">
-                Full Activity Log
-              </Button>
+              <RecentActivity items={recentFeed} isLoading={isRecentLoading} />
+              <Link href="/activities">
+                <Button variant="outline" className="w-full mt-8 rounded-xl border-white/10 hover:bg-white/5">
+                  Full Activity Log
+                </Button>
+              </Link>
             </div>
 
-            <div className="glass-card p-6 rounded-2xl bg-gradient-to-br from-ai/10 to-transparent border-ai/20">
+            {/* <div className="glass-card p-6 rounded-2xl bg-gradient-to-br from-ai/10 to-transparent border-ai/20">
               <div className="flex items-center gap-2 mb-3 text-ai">
                 <Sparkles className="w-5 h-5" />
                 <span className="text-sm font-bold uppercase tracking-widest">AI Tip</span>
@@ -120,7 +129,7 @@ export default function Home() {
                 <Button size="sm" className="bg-ai text-ai-foreground hover:bg-ai/90 rounded-lg font-bold">Yes, please</Button>
                 <Button size="sm" variant="ghost" className="text-muted-foreground hover:text-foreground">Ignore</Button>
               </div>
-            </div>
+            </div> */}
           </aside>
         </div>
       </div>

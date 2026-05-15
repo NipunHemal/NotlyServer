@@ -63,5 +63,9 @@ export const API_ENDPOINTS = {
     ENTITY: (entityType: string, entityId: string) => `/activities/entity/${entityType}/${entityId}`,
     ME_RANGE: "/activities/me/range",
     ME_STATS: "/activities/me/stats",
+  },
+  DASHBOARD: {
+    STATS: "/dashboard/stats",
+    RECENT: "/dashboard/recent",
   }
 };

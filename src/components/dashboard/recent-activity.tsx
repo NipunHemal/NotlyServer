@@ -2,46 +2,60 @@
 "use client";
 
 import React from 'react';
-import { useStore } from '@/store/use-store';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Edit2, Share2, History, Trash2, Key, Plus, Upload, Trash } from 'lucide-react';
+import { DashboardRecentItem } from '@/service/functions/dashboard.service';
+import { FileText, Activity as ActivityIcon, Loader2, Clock } from 'lucide-react';
+import Link from 'next/link';
 
-const icons = {
-  edit: Edit2,
-  share: Share2,
-  version: History,
-  restore: History,
-  access: Key,
-  create: Plus,
-  upload: Upload,
-  delete: Trash,
+interface RecentActivityProps {
+  items?: DashboardRecentItem[];
+  isLoading: boolean;
+}
+
+const getIcon = (iconStr: string) => {
+  switch (iconStr) {
+    case 'note': return FileText;
+    case 'activity': return ActivityIcon;
+    default: return FileText;
+  }
 };
 
-export function RecentActivity() {
-  const { activities } = useStore();
+export function RecentActivity({ items, isLoading }: RecentActivityProps) {
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-10">
+        <Loader2 className="w-6 h-6 animate-spin text-primary/40" />
+      </div>
+    );
+  }
+
+  if (!items || items.length === 0) {
+    return <p className="text-sm text-muted-foreground">No recent activity.</p>;
+  }
 
   return (
     <div className="space-y-4">
-      {activities.map((activity, idx) => {
-        const Icon = icons[activity.type] || Edit2;
+      {items.map((item) => {
+        const Icon = getIcon(item.icon);
+        const isNote = item.type === 'NOTE';
+        const href = isNote ? `/notes/${item.id}` : `/activities`;
+        
         return (
-          <div key={activity.id} className="flex items-start gap-4 p-4 rounded-xl hover:bg-white/[0.02] transition-colors border border-transparent hover:border-white/5 group">
-            <div className="relative">
-              <Avatar className="w-10 h-10 border border-white/10">
-                <AvatarImage src={`https://picsum.photos/seed/user-${idx}/100/100`} />
-                <AvatarFallback>U</AvatarFallback>
-              </Avatar>
-              <div className="absolute -bottom-1 -right-1 p-1 rounded-full bg-card border border-white/10 text-primary">
-                <Icon className="w-3 h-3" />
+          <Link key={item.id} href={href} className="flex items-start gap-4 p-4 rounded-xl hover:bg-white/[0.02] transition-colors border border-transparent hover:border-white/5 group">
+            <div className="relative shrink-0">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center border border-white/10 ${isNote ? 'bg-primary/10 text-primary' : 'bg-ai/10 text-ai'}`}>
+                <Icon className="w-4 h-4" />
               </div>
             </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium leading-tight text-foreground/90">
-                <span className="font-bold text-foreground">{activity.user}</span> {activity.description}
+            <div className="flex-1 min-w-0 flex flex-col justify-center h-10">
+              <p className="text-sm font-bold leading-tight text-foreground/90 truncate">
+                {item.title}
               </p>
-              <p className="text-xs text-muted-foreground mt-1">{activity.timestamp}</p>
+              <div className="flex items-center gap-1.5 mt-1">
+                <Clock className="w-3 h-3 text-muted-foreground/50" />
+                <p className="text-xs font-medium text-muted-foreground/70">{item.subtitle}</p>
+              </div>
             </div>
-          </div>
+          </Link>
         );
       })}
     </div>

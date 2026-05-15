@@ -4,26 +4,33 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Share2, Star, Clock } from 'lucide-react';
+import { DashboardStats } from '@/service/functions/dashboard.service';
+import { Loader2 } from 'lucide-react';
 
-interface StatItem {
-  label: string;
-  value: string;
-  sub: string;
-  icon: React.ElementType;
-  color: string;
+interface StatsGridProps {
+  stats?: DashboardStats;
+  isLoading: boolean;
 }
 
-const stats: StatItem[] = [
-  { label: 'Total Notes', value: '1,284', sub: '+12 this week', icon: FileText, color: 'text-primary' },
-  { label: 'Shared Notes', value: '42', sub: '3 active shares', icon: Share2, color: 'text-accent' },
-  { label: 'Favorites', value: '18', sub: 'Pinned for quick access', icon: Star, color: 'text-yellow-400' },
-  { label: 'Reminders', value: '7', sub: '2 due today', icon: Clock, color: 'text-destructive' },
-];
+export function StatsGrid({ stats, isLoading }: StatsGridProps) {
+  if (isLoading || !stats) {
+    return (
+      <div className="flex items-center justify-center py-10">
+        <Loader2 className="w-8 h-8 animate-spin text-primary/40" />
+      </div>
+    );
+  }
 
-export function StatsGrid() {
+  const statItems = [
+    { label: 'Total Notes', value: stats.totalNotes, sub: `${stats.activitiesThisWeek} activities this week`, icon: FileText, color: 'text-primary' },
+    { label: 'Shared Notes', value: stats.sharedNotes, sub: 'Active shared docs', icon: Share2, color: 'text-accent' },
+    { label: 'Favorites', value: stats.favoriteNotes + stats.favoriteGroups, sub: 'Pinned items', icon: Star, color: 'text-yellow-400' },
+    { label: 'Bin Items', value: stats.binItems, sub: 'In trash', icon: Clock, color: 'text-destructive' },
+  ];
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {stats.map((stat, idx) => (
+      {statItems.map((stat, idx) => (
         <motion.div
           key={stat.label}
           initial={{ opacity: 0, scale: 0.95 }}
