@@ -7,6 +7,9 @@ import QueryProvider from '@/components/providers/query-provider';
 export const metadata: Metadata = {
   title: 'CognitoNotes AI | Your Intelligent Workspace',
   description: 'Premium AI-powered knowledge management system for modern professionals.',
+  icons: {
+    icon: '/favicon.ico',
+  },
 };
 
 export default function RootLayout({

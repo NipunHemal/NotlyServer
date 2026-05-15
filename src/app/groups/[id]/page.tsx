@@ -15,11 +15,13 @@ import { Search, Grid, List as ListIcon, Filter, Plus, Lock, Key, Loader2 } from
 import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGroupById, useGroupChildren, useGroupBreadcrumb, useGroupStats } from '@/service/query/useGroup';
+import { useStore } from '@/store/use-store';
 
 export default function GroupDetailsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [unlockToken, setUnlockToken] = useState<string>("");
   const [view, setView] = React.useState<'grid' | 'list'>('grid');
+  const setCreateGroupModalOpen = useStore((state) => state.setCreateGroupModalOpen);
   
   const { data: group, isLoading: isGroupLoading } = useGroupById(id);
   const { data: children, isLoading: isChildrenLoading, error: childrenError } = useGroupChildren(id, unlockToken);
@@ -186,7 +188,10 @@ export default function GroupDetailsPage({ params }: { params: Promise<{ id: str
                   {subGroups.map(sub => (
                     <GroupCard key={sub.id} group={sub} />
                   ))}
-                  <button className="rounded-2xl border-2 border-dashed border-white/5 hover:border-primary/30 hover:bg-primary/5 transition-all flex flex-col items-center justify-center p-8 gap-4 text-muted-foreground hover:text-primary min-h-[200px]">
+                  <button 
+                    onClick={() => setCreateGroupModalOpen(true, group.id)}
+                    className="rounded-2xl border-2 border-dashed border-white/5 hover:border-primary/30 hover:bg-primary/5 transition-all flex flex-col items-center justify-center p-8 gap-4 text-muted-foreground hover:text-primary min-h-[200px]"
+                  >
                     <Plus className="w-6 h-6" />
                     <span className="font-bold text-sm">New Sub Group</span>
                   </button>

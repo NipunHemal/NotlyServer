@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,14 +14,20 @@ import { Switch } from '@/components/ui/switch';
 import { useCreateGroup, useGroupTree } from '@/service/query/useGroup';
 
 export function CreateGroupModal() {
-  const { isCreateGroupModalOpen, setCreateGroupModalOpen, user } = useStore();
+  const { isCreateGroupModalOpen, setCreateGroupModalOpen, user, createGroupParentId, selectedWorkspaceId } = useStore();
   const createGroupMutation = useCreateGroup();
-  const { data: groupTree } = useGroupTree(user?.id); // In actual app, workspace_id might be different
+  const { data: groupTree } = useGroupTree(selectedWorkspaceId || '');
   
   const [name, setName] = useState('');
   const [parentId, setParentId] = useState<string>('');
   const [isSecure, setIsSecure] = useState(false);
   const [password, setPassword] = useState('');
+  
+  useEffect(() => {
+    if (isCreateGroupModalOpen) {
+      setParentId(createGroupParentId || '');
+    }
+  }, [isCreateGroupModalOpen, createGroupParentId]);
 
   const handleCreate = () => {
     createGroupMutation.mutate({

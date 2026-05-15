@@ -56,6 +56,7 @@ export interface Collaborator {
     username: string;
     email: string;
     displayName: string;
+    avatarUrl?: string;
   };
 }
 

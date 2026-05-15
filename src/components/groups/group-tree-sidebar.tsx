@@ -26,6 +26,7 @@ const GroupTreeItem = ({ group, level }: GroupTreeItemProps) => {
   const hasSubGroups = group.children && group.children.length > 0;
   const toggleFavorite = useToggleGroupFavorite();
   const deleteGroup = useDeleteGroup();
+  const setCreateGroupModalOpen = useStore((state) => state.setCreateGroupModalOpen);
 
   return (
     <div className="space-y-1">
@@ -66,7 +67,15 @@ const GroupTreeItem = ({ group, level }: GroupTreeItemProps) => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-48 glass-panel border-white/10 bg-popover/90 backdrop-blur-xl">
-            <DropdownMenuItem className="gap-2 cursor-pointer"><Plus className="w-4 h-4" /> Create Sub Group</DropdownMenuItem>
+            <DropdownMenuItem 
+              className="gap-2 cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                setCreateGroupModalOpen(true, group.id);
+              }}
+            >
+              <Plus className="w-4 h-4" /> Create Sub Group
+            </DropdownMenuItem>
             <DropdownMenuItem className="gap-2 cursor-pointer">Rename</DropdownMenuItem>
             <DropdownMenuItem className="gap-2 cursor-pointer">Move</DropdownMenuItem>
             <DropdownMenuSeparator className="bg-white/5" />
@@ -112,8 +121,8 @@ const GroupTreeItem = ({ group, level }: GroupTreeItemProps) => {
 };
 
 export function GroupTreeSidebar() {
-  const { user, setCreateGroupModalOpen } = useStore();
-  const { data: groupTree, isLoading } = useGroupTree(user?.id);
+  const { user, setCreateGroupModalOpen, selectedWorkspaceId } = useStore();
+  const { data: groupTree, isLoading } = useGroupTree(selectedWorkspaceId || '');
 
   return (
     <div className="w-64 flex flex-col h-full border-r border-white/5 bg-white/[0.01] overflow-hidden">

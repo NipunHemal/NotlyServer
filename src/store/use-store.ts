@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
+import Cookies from 'js-cookie';
 
 export type FileType = 'system_doc' | 'pdf' | 'text' | 'excel' | 'doc' | 'image' | 'file';
 
@@ -85,7 +86,12 @@ interface AppState {
   // UI States
   isCreateNoteModalOpen: boolean;
   isCreateGroupModalOpen: boolean;
+  createGroupParentId: string | null;
   isUploadModalOpen: boolean;
+  
+  // Workspace State
+  workspaces: any[];
+  selectedWorkspaceId: string | null;
   
   // Actions
   setAuth: (user: User, accessToken: string, refreshToken: string) => void;
@@ -102,9 +108,12 @@ interface AppState {
   setSidebarOpen: (open: boolean) => void;
   setSearchOpen: (open: boolean) => void;
   setCreateNoteModalOpen: (open: boolean) => void;
-  setCreateGroupModalOpen: (open: boolean) => void;
+  setCreateGroupModalOpen: (open: boolean, parentId?: string | null) => void;
+  setCreateGroupParentId: (id: string | null) => void;
   setUploadModalOpen: (open: boolean) => void;
   setSaving: (saving: boolean) => void;
+  setWorkspaces: (workspaces: any[]) => void;
+  setSelectedWorkspaceId: (id: string | null) => void;
   addActivity: (activity: Omit<Activity, 'id' | 'timestamp' | 'user'>) => void;
   createVersion: (noteId: string, label: string) => void;
   restoreVersion: (noteId: string, versionId: string) => void;
@@ -166,27 +175,38 @@ export const useStore = create<AppState>()(
       isSaving: false,
       
       user: null,
-      accessToken: null,
-      refreshToken: null,
-      isAuthenticated: false,
+      accessToken: Cookies.get('accessToken') || null,
+      refreshToken: Cookies.get('refreshToken') || null,
+      isAuthenticated: !!Cookies.get('accessToken'),
 
       isCreateNoteModalOpen: false,
       isCreateGroupModalOpen: false,
+      createGroupParentId: null,
       isUploadModalOpen: false,
+      workspaces: [],
+      selectedWorkspaceId: null,
 
-      setAuth: (user, accessToken, refreshToken) => set({ 
-        user, 
-        accessToken, 
-        refreshToken, 
-        isAuthenticated: true 
-      }),
+      setAuth: (user, accessToken, refreshToken) => {
+        Cookies.set('accessToken', accessToken, { expires: 7 });
+        Cookies.set('refreshToken', refreshToken, { expires: 30 });
+        set({ 
+          user, 
+          accessToken, 
+          refreshToken, 
+          isAuthenticated: true 
+        });
+      },
 
-      clearAuth: () => set({ 
-        user: null, 
-        accessToken: null, 
-        refreshToken: null, 
-        isAuthenticated: false 
-      }),
+      clearAuth: () => {
+        Cookies.remove('accessToken');
+        Cookies.remove('refreshToken');
+        set({ 
+          user: null, 
+          accessToken: null, 
+          refreshToken: null, 
+          isAuthenticated: false 
+        });
+      },
 
       updateUser: (updates) => set((state) => ({
         user: state.user ? { ...state.user, ...updates } : null
@@ -318,19 +338,23 @@ export const useStore = create<AppState>()(
       setSidebarOpen: (open) => set({ sidebarOpen: open }),
       setSearchOpen: (open) => set({ searchOpen: open }),
       setCreateNoteModalOpen: (open) => set({ isCreateNoteModalOpen: open }),
-      setCreateGroupModalOpen: (open) => set({ isCreateGroupModalOpen: open }),
+      setCreateGroupModalOpen: (open, parentId = null) => set({ 
+        isCreateGroupModalOpen: open,
+        createGroupParentId: parentId 
+      }),
+      setCreateGroupParentId: (id) => set({ createGroupParentId: id }),
       setUploadModalOpen: (open) => set({ isUploadModalOpen: open }),
+      setWorkspaces: (workspaces) => set({ workspaces }),
+      setSelectedWorkspaceId: (id) => set({ selectedWorkspaceId: id }),
     }),
     {
       name: 'notly-storage',
       storage: createJSONStorage(() => localStorage),
       partialize: (state) => ({
         user: state.user,
-        accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
-        isAuthenticated: state.isAuthenticated,
+        selectedWorkspaceId: state.selectedWorkspaceId,
         sidebarOpen: state.sidebarOpen,
-        notes: state.notes, // Persist notes including deleted ones
+        notes: state.notes,
       }),
     }
   )

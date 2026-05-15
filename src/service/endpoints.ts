@@ -29,5 +29,8 @@ export const API_ENDPOINTS = {
     COLLABORATOR_BY_ID: (id: string, userId: string) => `/groups/${id}/collaborators/${userId}`,
     FAVORITE: (id: string) => `/groups/${id}/favorite`,
     PUBLIC_GROUP: (token: string) => `/groups/public/${token}`,
+  },
+  WORKSPACES: {
+    LIST: "/workspaces",
   }
 };

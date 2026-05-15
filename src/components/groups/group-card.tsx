@@ -2,7 +2,7 @@
 "use client";
 
 import React from 'react';
-import { Group } from '@/service/functions/group.service';
+import { Group, GroupTreeNode } from '@/service/functions/group.service';
 import { motion } from 'framer-motion';
 import { Folder, MoreVertical, FileText, Clock, Archive, Trash2, Move, Edit2, Lock, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 interface GroupCardProps {
-  group: Group;
+  group: Group | GroupTreeNode;
 }
 
 export function GroupCard({ group }: GroupCardProps) {
@@ -32,6 +32,11 @@ export function GroupCard({ group }: GroupCardProps) {
     e.preventDefault();
     e.stopPropagation();
     favoriteMutation.mutate(group.id);
+  };
+
+  // Type guard or simple check for Group properties missing in GroupTreeNode
+  const isFullGroup = (g: Group | GroupTreeNode): g is Group => {
+    return 'updated_at' in g;
   };
 
   return (
@@ -88,7 +93,7 @@ export function GroupCard({ group }: GroupCardProps) {
             </span>
             <span className="flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5" />
-              {formatDistanceToNow(new Date(group.updated_at), { addSuffix: true })}
+              {isFullGroup(group) ? formatDistanceToNow(new Date(group.updated_at), { addSuffix: true }) : 'Recently'}
             </span>
           </div>
           

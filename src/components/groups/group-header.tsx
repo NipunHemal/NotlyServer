@@ -21,6 +21,7 @@ import {
   TooltipTrigger 
 } from '@/components/ui/tooltip';
 import { useToggleGroupFavorite, useCollaborators } from '@/service/query/useGroup';
+import { useStore } from '@/store/use-store';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 
@@ -31,6 +32,7 @@ interface GroupHeaderProps {
 export function GroupHeader({ group }: GroupHeaderProps) {
   const toggleFavorite = useToggleGroupFavorite();
   const { data: collaborators } = useCollaborators(group.id);
+  const setCreateGroupModalOpen = useStore((state) => state.setCreateGroupModalOpen);
 
   return (
     <header className="space-y-6">
@@ -93,9 +95,12 @@ export function GroupHeader({ group }: GroupHeaderProps) {
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="w-10 h-10 rounded-xl hover:bg-primary/10 hover:text-primary transition-all">
+                  <button 
+                    onClick={() => setCreateGroupModalOpen(true, group.id)}
+                    className="w-10 h-10 rounded-xl hover:bg-primary/10 hover:text-primary transition-all flex items-center justify-center"
+                  >
                     <FolderPlus className="w-5 h-5" />
-                  </Button>
+                  </button>
                 </TooltipTrigger>
                 <TooltipContent className="bg-popover/90 backdrop-blur-md border-white/10">Create Sub-Group</TooltipContent>
               </Tooltip>

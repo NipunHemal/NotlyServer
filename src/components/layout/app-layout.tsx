@@ -15,6 +15,7 @@ import { CreateGroupModal } from '@/components/modals/create-group-modal';
 import { GlobalSearch } from '@/components/search/global-search';
 import { useLogout } from '@/service/query/useAuth';
 import { useMe } from '@/service/query/useUser';
+import { useWorkspaces } from '@/service/query/useWorkspace';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
@@ -22,8 +23,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { sidebarOpen, setCreateNoteModalOpen, setSearchOpen, user, isAuthenticated } = useStore();
   const logoutMutation = useLogout();
   
-  // Keep profile in sync if authenticated
+  // Keep profile and workspaces in sync if authenticated
   useMe();
+  useWorkspaces();
 
   const menuItems = [
     { icon: Home, label: 'Home', href: '/dashboard' },

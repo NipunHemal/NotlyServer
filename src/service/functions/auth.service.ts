@@ -33,10 +33,10 @@ export const register = async (data: RegisterCredentials): Promise<AuthResponse>
 };
 
 export const logout = async (refreshToken: string): Promise<void> => {
-  await axiosClient.post(API_ENDPOINTS.AUTH.LOGOUT, { refresh_token: refreshToken });
+  await axiosClient.post(API_ENDPOINTS.AUTH.LOGOUT, { refreshToken });
 };
 
 export const refresh = async (refreshToken: string): Promise<AuthResponse> => {
-  const response = await axiosClient.post(API_ENDPOINTS.AUTH.REFRESH, { refresh_token: refreshToken });
+  const response = await axiosClient.post(API_ENDPOINTS.AUTH.REFRESH, { refreshToken });
   return response.data;
 };

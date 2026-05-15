@@ -4,7 +4,7 @@
 import React from 'react';
 import { useStore } from '@/store/use-store';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Edit2, Share2, History, Trash2, Key } from 'lucide-react';
+import { Edit2, Share2, History, Trash2, Key, Plus, Upload, Trash } from 'lucide-react';
 
 const icons = {
   edit: Edit2,
@@ -12,6 +12,9 @@ const icons = {
   version: History,
   restore: History,
   access: Key,
+  create: Plus,
+  upload: Upload,
+  delete: Trash,
 };
 
 export function RecentActivity() {
