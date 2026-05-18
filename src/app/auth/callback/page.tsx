@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useGoogleLogin } from '@/service/query/useAuth';
 import { Loader2 } from 'lucide-react';
 
-export default function AuthCallbackPage() {
+function AuthCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { mutate: googleLogin, isPending } = useGoogleLogin();
@@ -46,19 +46,40 @@ export default function AuthCallbackPage() {
   }, [searchParams, googleLogin, router]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-background">
-      <div className="space-y-6 text-center">
-        <div className="relative">
-          <div className="w-20 h-20 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto">
-            <Loader2 className="w-10 h-10 animate-spin text-primary" />
-          </div>
-          <div className="absolute inset-0 w-20 h-20 rounded-full border-t-2 border-primary animate-spin mx-auto" />
+    <div className="space-y-6 text-center">
+      <div className="relative">
+        <div className="w-20 h-20 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto">
+          <Loader2 className="w-10 h-10 animate-spin text-primary" />
         </div>
-        <div className="space-y-2">
-          <h2 className="text-2xl font-black tracking-tight">Authenticating...</h2>
-          <p className="text-muted-foreground font-medium uppercase text-[10px] tracking-[0.2em]">Synchronizing with Google Intelligence</p>
-        </div>
+        <div className="absolute inset-0 w-20 h-20 rounded-full border-t-2 border-primary animate-spin mx-auto" />
       </div>
+      <div className="space-y-2">
+        <h2 className="text-2xl font-black tracking-tight">Authenticating...</h2>
+        <p className="text-muted-foreground font-medium uppercase text-[10px] tracking-[0.2em]">Synchronizing with Google Intelligence</p>
+      </div>
+    </div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background">
+      <React.Suspense fallback={
+        <div className="space-y-6 text-center">
+          <div className="relative">
+            <div className="w-20 h-20 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center mx-auto">
+              <Loader2 className="w-10 h-10 animate-spin text-primary" />
+            </div>
+            <div className="absolute inset-0 w-20 h-20 rounded-full border-t-2 border-primary animate-spin mx-auto" />
+          </div>
+          <div className="space-y-2">
+            <h2 className="text-2xl font-black tracking-tight">Authenticating...</h2>
+            <p className="text-muted-foreground font-medium uppercase text-[10px] tracking-[0.2em]">Loading</p>
+          </div>
+        </div>
+      }>
+        <AuthCallbackContent />
+      </React.Suspense>
     </div>
   );
 }
